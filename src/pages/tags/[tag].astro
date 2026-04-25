@@ -5,6 +5,7 @@ import ArticleCard from '@/components/ArticleCard.astro';
 import PageHeader from '@/components/PageHeader.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getAllTags, slugify, sortPosts } from '@/lib/posts';
+import { PAGES } from '@/lib/site';
 
 export async function getStaticPaths() {
   const allPosts = sortPosts(await getCollection('blog'));
@@ -18,10 +19,11 @@ export async function getStaticPaths() {
 const { tag } = Astro.props;
 const allPosts = sortPosts(await getCollection('blog'));
 const posts = allPosts.filter((post) => post.data.tags.includes(tag));
+const page = PAGES.tags;
 ---
 
-<BaseLayout title={`#${tag}`} description={`标签 ${tag} 下的文章。`}>
-  <PageHeader eyebrow="Tag" title={`#${tag}`} description={`共 ${posts.length} 篇文章与这个标签有关。`} />
+<BaseLayout title={`#${tag}`} description={`${page.detailDescriptionPrefix}${tag}${page.detailDescriptionSuffix}`}>
+  <PageHeader eyebrow={page.detailEyebrow} title={`#${tag}`} description={`${page.detailCountPrefix}${posts.length}${page.detailCountSuffix}`} />
   <section class="page-shell grid gap-6 md:grid-cols-2">
     {posts.map((post) => <ArticleCard post={post} />)}
   </section>

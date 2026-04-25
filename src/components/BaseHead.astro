@@ -1,6 +1,6 @@
 ---
 import { asset } from '@/lib/paths';
-import { SITE } from '@/lib/site';
+import { SEO, SITE, THEME } from '@/lib/site';
 
 interface Props {
   title?: string;
@@ -12,8 +12,8 @@ interface Props {
 const {
   title = SITE.title,
   description = SITE.description,
-  image = '/images/og-card.svg',
-  type = 'website'
+  image = SEO.defaultImage,
+  type = SEO.defaultType
 } = Astro.props;
 
 const pageTitle = title === SITE.title ? title : `${title} | ${SITE.title}`;
@@ -27,23 +27,24 @@ const imageUrl = new URL(asset(image), Astro.site ?? Astro.url.origin);
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
-<link rel="icon" href={asset('/favicon.svg')} type="image/svg+xml" />
-<link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href={asset('/rss.xml')} />
+<link rel="icon" href={asset(SEO.favicon)} type="image/svg+xml" />
+<link rel="alternate" type="application/rss+xml" title={SEO.rssTitle} href={asset(SEO.rssPath)} />
 
 <meta property="og:type" content={type} />
 <meta property="og:title" content={pageTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
 <meta property="og:image" content={imageUrl} />
-<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:card" content={SEO.twitterCard} />
 <meta name="twitter:title" content={pageTitle} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={imageUrl} />
 
-<script is:inline>
+<script is:inline define:vars={{ themeStorageKey: THEME.storageKey, defaultTheme: THEME.defaultMode }}>
   (() => {
-    const saved = localStorage.getItem('theme');
+    const saved = localStorage.getItem(themeStorageKey);
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.classList.toggle('dark', saved ? saved === 'dark' : prefersDark);
+    const shouldUseDark = saved ? saved === 'dark' : defaultTheme === 'dark' || (defaultTheme === 'system' && prefersDark);
+    document.documentElement.classList.toggle('dark', shouldUseDark);
   })();
 </script>

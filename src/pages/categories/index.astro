@@ -5,14 +5,15 @@ import PageHeader from '@/components/PageHeader.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { link } from '@/lib/paths';
 import { getCategoryCounts, sortPosts } from '@/lib/posts';
-import { categories } from '@/lib/site';
+import { categories, PAGES } from '@/lib/site';
 
 const posts = sortPosts(await getCollection('blog'));
 const counts = getCategoryCounts(posts);
+const page = PAGES.categories;
 ---
 
-<BaseLayout title="分类" description="按主题浏览所有文章。">
-  <PageHeader eyebrow="Categories" title="分类" description="给文章找一个温柔的小格子。" />
+<BaseLayout title={page.title} description={page.description}>
+  <PageHeader eyebrow={page.eyebrow} title={page.headerTitle} description={page.headerDescription} />
   <section class="page-shell grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
     {
       categories.map((category) => (

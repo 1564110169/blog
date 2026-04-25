@@ -5,14 +5,16 @@ import PageHeader from '@/components/PageHeader.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { link } from '@/lib/paths';
 import { getTagCounts, slugify, sortPosts } from '@/lib/posts';
+import { PAGES, SITE } from '@/lib/site';
 
 const posts = sortPosts(await getCollection('blog'));
 const tagCounts = getTagCounts(posts);
-const tags = Object.keys(tagCounts).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+const tags = Object.keys(tagCounts).sort((a, b) => a.localeCompare(b, SITE.locale));
+const page = PAGES.tags;
 ---
 
-<BaseLayout title="标签" description="按标签浏览文章。">
-  <PageHeader eyebrow="Tags" title="标签云" description="那些反复出现的关键词，会慢慢变成站点的纹理。" />
+<BaseLayout title={page.title} description={page.description}>
+  <PageHeader eyebrow={page.eyebrow} title={page.headerTitle} description={page.headerDescription} />
   <section class="page-shell">
     <div class="soft-card flex flex-wrap gap-3 p-6">
       {

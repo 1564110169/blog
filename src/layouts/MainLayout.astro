@@ -4,6 +4,7 @@ import CursorAura from '@/components/CursorAura.astro';
 import RightPanel from '@/components/RightPanel.astro';
 import SakuraBackdrop from '@/components/SakuraBackdrop.astro';
 import Sidebar from '@/components/Sidebar.astro';
+import { SITE } from '@/lib/site';
 import '@/styles/global.css';
 import '@/styles/dashboard.css';
 
@@ -17,7 +18,7 @@ const { title, description, image } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang={SITE.locale}>
   <head>
     <BaseHead title={title} description={description} image={image} />
   </head>

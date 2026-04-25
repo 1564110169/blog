@@ -1,6 +1,6 @@
 import type { CollectionEntry } from 'astro:content';
 
-import { getCategoryName } from './site';
+import { ARTICLE_DEFAULTS, getCategoryName, SITE } from './site';
 
 export type BlogPost = CollectionEntry<'blog'>;
 
@@ -17,13 +17,16 @@ export function getReadingTime(body = '') {
     .trim()
     .split(/\s+/)
     .filter(Boolean).length;
-  const minutes = Math.ceil(chineseChars / 420 + latinWords / 220);
+  const minutes = Math.ceil(
+    chineseChars / ARTICLE_DEFAULTS.readingTime.chineseCharsPerMinute +
+      latinWords / ARTICLE_DEFAULTS.readingTime.latinWordsPerMinute
+  );
   return Math.max(1, minutes);
 }
 
 export function getAllTags(posts: BlogPost[]) {
   return Array.from(new Set(posts.flatMap((post) => post.data.tags))).sort((a, b) =>
-    a.localeCompare(b, 'zh-CN')
+    a.localeCompare(b, SITE.locale)
   );
 }
 
@@ -54,7 +57,7 @@ export function slugify(value: string) {
 }
 
 export function formatDate(date: Date) {
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(SITE.locale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -62,5 +65,5 @@ export function formatDate(date: Date) {
 }
 
 export function postDescription(post: BlogPost) {
-  return `${getCategoryName(post.data.category)} · ${formatDate(post.data.date)} · ${getReadingTime(post.body)} 分钟阅读`;
+  return `${getCategoryName(post.data.category)} · ${formatDate(post.data.date)} · ${getReadingTime(post.body)} ${ARTICLE_DEFAULTS.labels.minuteReading}`;
 }

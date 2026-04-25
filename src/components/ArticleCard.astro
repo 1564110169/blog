@@ -2,7 +2,7 @@
 import type { BlogPost } from '@/lib/posts';
 import { formatDate, getReadingTime, slugify } from '@/lib/posts';
 import { asset, link } from '@/lib/paths';
-import { getCategoryName } from '@/lib/site';
+import { ARTICLE_DEFAULTS, getCategoryName } from '@/lib/site';
 
 interface Props {
   post: BlogPost;
@@ -12,7 +12,7 @@ interface Props {
 }
 
 const { post, compact = false, feature = false, reverse = false } = Astro.props;
-const cover = post.data.cover ?? '/images/covers/default.svg';
+const cover = post.data.cover ?? ARTICLE_DEFAULTS.defaultCover;
 ---
 
 <article
@@ -23,7 +23,7 @@ const cover = post.data.cover ?? '/images/covers/default.svg';
     feature && reverse && 'article-card-reverse'
   ]}
 >
-  <a class="article-card-cover relative block overflow-hidden" href={link(`/posts/${post.slug}`)} aria-label={`阅读 ${post.data.title}`}>
+  <a class="article-card-cover relative block overflow-hidden" href={link(`/posts/${post.slug}`)} aria-label={`${ARTICLE_DEFAULTS.labels.readAriaPrefix} ${post.data.title}`}>
     <img
       class:list={[
         'h-52 w-full object-cover transition-transform duration-[280ms] ease-out group-hover:scale-[1.03]',
@@ -42,7 +42,7 @@ const cover = post.data.cover ?? '/images/covers/default.svg';
     <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
       <span>{formatDate(post.data.date)}</span>
       <span>·</span>
-      <span>{getReadingTime(post.body)} 分钟</span>
+      <span>{getReadingTime(post.body)} {ARTICLE_DEFAULTS.labels.minute}</span>
     </div>
     <h2 class:list={['mt-4 font-display font-extrabold leading-snug text-ink-900 transition-colors duration-[240ms] ease-out group-hover:text-sakura-500 dark:text-white dark:group-hover:text-sakura-200', feature ? 'text-2xl sm:text-3xl' : 'text-xl']}>
       <a href={link(`/posts/${post.slug}`)}>{post.data.title}</a>
@@ -54,8 +54,8 @@ const cover = post.data.cover ?? '/images/covers/default.svg';
       <div class="flex flex-wrap gap-2">
         {post.data.tags.slice(0, 3).map((tag) => <a class="tag-chip" href={link(`/tags/${slugify(tag)}`)}>#{tag}</a>)}
       </div>
-      <a class="text-sm font-black text-sakura-500 opacity-0 transition-opacity duration-[240ms] ease-out group-hover:opacity-100 dark:text-sakura-200" href={link(`/posts/${post.slug}`)} aria-label={`阅读 ${post.data.title}`}>
-        Read
+      <a class="text-sm font-black text-sakura-500 opacity-0 transition-opacity duration-[240ms] ease-out group-hover:opacity-100 dark:text-sakura-200" href={link(`/posts/${post.slug}`)} aria-label={`${ARTICLE_DEFAULTS.labels.readAriaPrefix} ${post.data.title}`}>
+        {ARTICLE_DEFAULTS.labels.readMore}
       </a>
     </div>
   </div>

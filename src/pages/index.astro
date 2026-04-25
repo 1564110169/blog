@@ -6,22 +6,26 @@ import PostCard from '@/components/PostCard.astro';
 import MainLayout from '@/layouts/MainLayout.astro';
 import { link } from '@/lib/paths';
 import { sortPosts } from '@/lib/posts';
+import { ARTICLE_DEFAULTS, HOME } from '@/lib/site';
 
 const posts = sortPosts(await getCollection('blog'));
-const latestPosts = posts.slice(0, 6);
-const recommendedPosts = posts.filter((post) => post.data.category === 'tech' || post.data.category === 'reviews').slice(0, 3);
+const recommendedCategories = ARTICLE_DEFAULTS.recommendedCategories as readonly string[];
+const latestPosts = posts.slice(0, ARTICLE_DEFAULTS.latestLimit);
+const recommendedPosts = posts
+  .filter((post) => recommendedCategories.includes(post.data.category))
+  .slice(0, ARTICLE_DEFAULTS.recommendedLimit);
 ---
 
-<MainLayout title="首页">
+<MainLayout title={HOME.title}>
   <Hero />
 
-  <section id="latest" class="home-section">
+  <section id={HOME.latest.id} class="home-section">
     <div class="section-head">
       <div>
-        <p>Latest Posts</p>
-        <h2>最新文章</h2>
+        <p>{HOME.latest.eyebrow}</p>
+        <h2>{HOME.latest.title}</h2>
       </div>
-      <a href={link('/archive')}>查看归档</a>
+      <a href={link(HOME.latest.href)}>{HOME.latest.linkLabel}</a>
     </div>
     <div class="post-grid">
       {latestPosts.map((post, index) => <PostCard post={post} featured={index === 0} />)}
@@ -31,10 +35,10 @@ const recommendedPosts = posts.filter((post) => post.data.category === 'tech' ||
   <section class="home-section">
     <div class="section-head">
       <div>
-        <p>Recommended</p>
-        <h2>推荐文章</h2>
+        <p>{HOME.recommended.eyebrow}</p>
+        <h2>{HOME.recommended.title}</h2>
       </div>
-      <a href={link('/categories')}>浏览分类</a>
+      <a href={link(HOME.recommended.href)}>{HOME.recommended.linkLabel}</a>
     </div>
     <div class="recommend-grid">
       {recommendedPosts.map((post) => <PostCard post={post} compact />)}

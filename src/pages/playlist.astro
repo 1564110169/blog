@@ -2,10 +2,13 @@
 import PageHeader from '@/components/PageHeader.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { playlist } from '@/data/playlist';
+import { PAGES } from '@/lib/site';
+
+const page = PAGES.playlist;
 ---
 
-<BaseLayout title="歌单" description="适合写博客时循环播放的歌。">
-  <PageHeader eyebrow="Playlist" title="歌单" description="给不同时间段准备一点背景音乐。" />
+<BaseLayout title={page.title} description={page.description}>
+  <PageHeader eyebrow={page.eyebrow} title={page.headerTitle} description={page.headerDescription} />
   <section class="page-shell">
     <div class="soft-card divide-y divide-white/60 overflow-hidden dark:divide-white/10">
       {

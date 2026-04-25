@@ -5,7 +5,7 @@ import ArticleCard from '@/components/ArticleCard.astro';
 import PageHeader from '@/components/PageHeader.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { sortPosts } from '@/lib/posts';
-import { categories } from '@/lib/site';
+import { categories, PAGES } from '@/lib/site';
 
 export function getStaticPaths() {
   return categories.map((category) => ({
@@ -16,10 +16,11 @@ export function getStaticPaths() {
 
 const { category } = Astro.props;
 const posts = sortPosts(await getCollection('blog')).filter((post) => post.data.category === category.slug);
+const page = PAGES.categories;
 ---
 
-<BaseLayout title={`${category.name}分类`} description={category.description}>
-  <PageHeader eyebrow="Category" title={category.name} description={category.description} />
+<BaseLayout title={`${category.name}${page.detailTitleSuffix}`} description={category.description}>
+  <PageHeader eyebrow={page.detailEyebrow} title={category.name} description={category.description} />
   <section class="page-shell grid gap-6 md:grid-cols-2">
     {posts.map((post) => <ArticleCard post={post} />)}
   </section>

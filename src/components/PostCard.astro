@@ -2,7 +2,7 @@
 import type { BlogPost } from '@/lib/posts';
 import { formatDate, getReadingTime, slugify } from '@/lib/posts';
 import { asset, link } from '@/lib/paths';
-import { getCategoryName } from '@/lib/site';
+import { ARTICLE_DEFAULTS, getCategoryName } from '@/lib/site';
 
 interface Props {
   post: BlogPost;
@@ -11,21 +11,21 @@ interface Props {
 }
 
 const { post, featured = false, compact = false } = Astro.props;
-const cover = post.data.cover ?? '/images/covers/default.svg';
+const cover = post.data.cover ?? ARTICLE_DEFAULTS.defaultCover;
 const views = 1200 + post.slug.split('').reduce((total, char) => total + char.charCodeAt(0), 0) * 7;
 const viewText = views > 999 ? `${(views / 1000).toFixed(1)}k` : String(views);
 ---
 
 <article class:list={['post-card group', featured && 'post-card-featured', compact && 'post-card-compact']}>
-  <a class="post-cover" href={link(`/posts/${post.slug}`)} aria-label={`阅读 ${post.data.title}`}>
+  <a class="post-cover" href={link(`/posts/${post.slug}`)} aria-label={`${ARTICLE_DEFAULTS.labels.readAriaPrefix} ${post.data.title}`}>
     <img src={asset(cover)} alt={post.data.title} loading="lazy" />
     <span>{getCategoryName(post.data.category)}</span>
   </a>
   <div class="post-info">
     <div class="post-meta">
       <span>{formatDate(post.data.date)}</span>
-      <span>{getReadingTime(post.body)} 分钟</span>
-      <span>阅读 {viewText}</span>
+      <span>{getReadingTime(post.body)} {ARTICLE_DEFAULTS.labels.minute}</span>
+      <span>{ARTICLE_DEFAULTS.labels.viewsPrefix} {viewText}</span>
     </div>
     <h3>
       <a href={link(`/posts/${post.slug}`)}>{post.data.title}</a>

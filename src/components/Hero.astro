@@ -1,20 +1,20 @@
 ---
 import { asset, link } from '@/lib/paths';
-import { PROFILE, SITE } from '@/lib/site';
+import { HOME, PROFILE, SITE } from '@/lib/site';
 ---
 
 <section
   class="anime-hero"
-  style={`background-image: linear-gradient(115deg, rgba(45, 28, 82, 0.78), rgba(237, 77, 140, 0.34) 48%, rgba(255, 255, 255, 0.2)), url('${asset('/images/hero-yume.svg')}');`}
+  style={`background-image: linear-gradient(115deg, rgba(45, 28, 82, 0.78), rgba(237, 77, 140, 0.34) 48%, rgba(255, 255, 255, 0.2)), url('${asset(HOME.hero.backgroundImage)}');`}
 >
   <div class="anime-hero-glow"></div>
   <div class="anime-hero-content">
-    <p class="anime-hero-kicker">Yuu no Digital Room</p>
+    <p class="anime-hero-kicker">{HOME.hero.kicker}</p>
     <h1>{PROFILE.heroTitle}</h1>
     <p>{SITE.description}</p>
     <div class="anime-hero-actions">
-      <a href="#latest">开始阅读</a>
-      <a href={link('/about')}>关于我</a>
+      <a href={HOME.hero.primaryHref}>{HOME.hero.primaryLabel}</a>
+      <a href={link(HOME.hero.secondaryHref)}>{HOME.hero.secondaryLabel}</a>
     </div>
   </div>
 </section>

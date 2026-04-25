@@ -9,7 +9,7 @@
 
 - 首页 Hero、最新文章、推荐文章、分类统计、标签云和个人信息侧栏
 - 全局三栏式桌面布局：左侧导航，中间内容，右侧信息面板
-- 文章归档、分类页、标签页、文章详情页、友链、书单、番组、歌单、项目、关于我
+- 文章归档、分类页、标签页、文章详情页、书单、番组、歌单、项目、关于我
 - 文章使用 Astro Content Collection，内容目录为 `src/content/blog`
 - 支持 Markdown 和 MDX，frontmatter 自动生成文章列表、分类、标签和 SEO 信息
 - 阅读时间、代码高亮、上一篇/下一篇、RSS、sitemap、Open Graph
@@ -96,25 +96,42 @@ frontmatter 字段由 `src/content/config.ts` 校验：
 
 如果 `draft: true`，文章不会出现在列表里。
 
-## 常用修改位置
+## 统一配置中心
 
-- 站点名称、作者、开始日期：`src/lib/site.ts`
-- 分类名称和导航配置：`src/lib/site.ts`
-- 首页头像、封面和 Hero 图：`public/images`
-- 友链、书单、番组、歌单、项目数据：`src/data`
-- 全局侧边栏和网易云播放器：`src/components/Sidebar.astro`
-- 全局样式和三栏布局：`src/styles/global.css`
+大多数日常修改都集中在根目录的 `site.ts`。这个文件里已经写了详细注释，优先在那里改：
+
+- 网站基础信息：首页标题、作者、描述、语言、建站日期、线上地址
+- 首页文案：Hero、最新文章区、推荐文章区
+- 导航菜单：左侧/手机顶部导航、普通顶部导航
+- 社交链接：预留在 `socialLinks`
+- 文章默认设置：默认封面、默认标签、草稿默认值、首页文章数量、推荐分类、阅读文案
+- 音乐卡片：网易云歌单 ID、播放器文案、歌单页歌曲列表
+- 主题外观：白天/黑夜模式默认策略、按钮图标和提示文案
+- SEO：默认分享图、favicon、RSS 标题和路径
+- 页脚信息：版权文字、页脚链接
+- 页面文案：归档、分类、标签、书单、番组、歌单、项目、关于页标题和说明
+- 分类和常用标签：`categories`、`commonTags`
+
+仍然放在其它位置的内容：
+
+- 文章正文：`src/content/blog`
+- 书单、番组、项目列表数据：`src/data`
+- 图片资源：`public/images`
+- 全局样式和三栏布局：`src/styles`
 
 ## 网易云歌单
 
-左下角播放器使用网易云外链播放器，配置在 `src/components/Sidebar.astro`：
+左下角播放器使用网易云外链播放器，配置在根目录 `site.ts` 的 `music`：
 
 ```ts
-const playlistSrc = 'https://music.163.com/outchain/player?type=0&id=399279457&auto=1&height=430';
-const currentTrackTitle = '悠の歌单';
+music: {
+  title: '悠の歌单',
+  neteasePlaylistId: '399279457',
+  songs: []
+}
 ```
 
-如果要换歌单，只需要把 `id=399279457` 改成新的歌单 ID。浏览器可能会限制首次自动播放，通常需要用户点击一次页面或播放器按钮后才会开始播放。
+如果要换歌单，只需要把 `neteasePlaylistId` 改成新的歌单 ID。浏览器可能会限制首次自动播放，通常需要用户点击一次页面或播放器按钮后才会开始播放。
 
 ## GitHub Pages 部署
 
@@ -157,6 +174,7 @@ const base = process.env.BASE ?? '/blog';
 │   └── styles/
 ├── astro.config.mjs
 ├── package.json
+├── site.ts
 ├── tailwind.config.mjs
 └── tsconfig.json
 ```

@@ -3,12 +3,12 @@ import { getCollection } from 'astro:content';
 
 import { asset, link } from '@/lib/paths';
 import { getAllTags, getCategoryCounts, getTagCounts, slugify, sortPosts } from '@/lib/posts';
-import { categories, PROFILE, SITE } from '@/lib/site';
+import { categories, PROFILE, RIGHT_PANEL, SITE } from '@/lib/site';
 
 const posts = sortPosts(await getCollection('blog'));
 const categoryCounts = getCategoryCounts(posts);
 const tagCounts = getTagCounts(posts);
-const tags = getAllTags(posts).slice(0, 18);
+const tags = getAllTags(posts).slice(0, RIGHT_PANEL.tagLimit);
 const runningDays = Math.max(1, Math.ceil((Date.now() - new Date(SITE.startDate).valueOf()) / 1000 / 60 / 60 / 24));
 ---
 
@@ -26,8 +26,8 @@ const runningDays = Math.max(1, Math.ceil((Date.now() - new Date(SITE.startDate)
 
   <section class="panel-card">
     <div class="panel-title">
-      <span>分类统计</span>
-      <a href={link('/categories')}>全部</a>
+      <span>{RIGHT_PANEL.categoriesTitle}</span>
+      <a href={link('/categories')}>{RIGHT_PANEL.categoriesLinkLabel}</a>
     </div>
     <div class="category-list">
       {
@@ -43,8 +43,8 @@ const runningDays = Math.max(1, Math.ceil((Date.now() - new Date(SITE.startDate)
 
   <section class="panel-card">
     <div class="panel-title">
-      <span>标签云</span>
-      <a href={link('/tags')}>更多</a>
+      <span>{RIGHT_PANEL.tagsTitle}</span>
+      <a href={link('/tags')}>{RIGHT_PANEL.tagsLinkLabel}</a>
     </div>
     <div class="tag-cloud">
       {tags.map((tag) => <a href={link(`/tags/${slugify(tag)}`)}>{tag}<em>{tagCounts[tag]}</em></a>)}
@@ -54,15 +54,15 @@ const runningDays = Math.max(1, Math.ceil((Date.now() - new Date(SITE.startDate)
   <section class="panel-card site-stats">
     <div>
       <strong>{posts.length}</strong>
-      <span>文章</span>
+      <span>{RIGHT_PANEL.statsLabels.posts}</span>
     </div>
     <div>
       <strong>{tags.length}</strong>
-      <span>标签</span>
+      <span>{RIGHT_PANEL.statsLabels.tags}</span>
     </div>
     <div>
       <strong>{runningDays}</strong>
-      <span>天</span>
+      <span>{RIGHT_PANEL.statsLabels.days}</span>
     </div>
   </section>
 </aside>

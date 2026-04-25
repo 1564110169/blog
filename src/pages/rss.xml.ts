@@ -8,7 +8,7 @@ import { SITE } from '@/lib/site';
 
 export const GET: APIRoute = async (context) => {
   const posts = sortPosts(await getCollection('blog'));
-  const site = context.site ?? new URL('https://yourname.github.io');
+  const site = context.site ?? new URL(SITE.base, SITE.url);
 
   return rss({
     title: SITE.title,

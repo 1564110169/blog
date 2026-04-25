@@ -1,6 +1,6 @@
 ---
 import { link } from '@/lib/paths';
-import { navGroups, SITE } from '@/lib/site';
+import { navGroups, navigationLabels, SITE } from '@/lib/site';
 
 import ThemeToggle from './ThemeToggle.astro';
 
@@ -17,7 +17,7 @@ function isActive(href: string) {
   <nav class="page-shell flex h-16 items-center justify-between gap-4">
     <a class="group inline-flex items-center gap-3" href={link('/')}>
       <span class="grid h-10 w-10 place-items-center rounded-card bg-ink-900 font-display text-lg font-black text-white shadow-soft transition-transform duration-[240ms] ease-out group-hover:-translate-y-px dark:bg-white dark:text-ink-900">
-        悠
+        {SITE.shortTitle}
       </span>
       <span class="hidden sm:inline">
         <span class="block font-display text-lg font-black leading-5 text-ink-900 dark:text-white">{SITE.shortTitle}Log</span>
@@ -57,7 +57,7 @@ function isActive(href: string) {
       <ThemeToggle />
       <details class="relative lg:hidden">
         <summary class="inline-flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-card border fine-line bg-white/60 shadow-sm backdrop-blur marker:hidden dark:bg-white/10">
-          <span class="sr-only">打开导航</span>
+          <span class="sr-only">{navigationLabels.mobileMenu}</span>
           <span aria-hidden="true">☰</span>
         </summary>
         <div class="glass absolute right-0 top-12 w-56 rounded-card p-3">
