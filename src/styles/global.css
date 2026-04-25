@@ -1448,6 +1448,25 @@ body {
     width: 44px;
   }
 
+  .dashboard-theme-toggle [data-theme-toggle],
+  .music-play-button,
+  .music-card-body {
+    --floating-glass-bg:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.38) 54%, rgba(238, 232, 255, 0.36)),
+      rgba(255, 255, 255, 0.42);
+    --floating-glass-border: rgba(255, 255, 255, 0.68);
+    --floating-glass-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.78),
+      inset 0 -1px 0 rgba(124, 82, 230, 0.16);
+    -webkit-backdrop-filter: blur(18px) saturate(155%);
+    backdrop-filter: blur(18px) saturate(155%);
+    background: var(--floating-glass-bg);
+    border-color: var(--floating-glass-border);
+    box-shadow: var(--floating-glass-shadow);
+    clip-path: inset(0 round 999px);
+    isolation: isolate;
+  }
+
   .music-play-button.is-tapping {
     animation: none;
   }
@@ -1538,6 +1557,21 @@ body {
     box-shadow: none;
   }
 
+  :root.dark .dashboard-theme-toggle [data-theme-toggle],
+  :root.dark .music-play-button,
+  :root.dark .music-card-body {
+    --floating-glass-bg:
+      linear-gradient(135deg, rgba(79, 68, 112, 0.58), rgba(37, 32, 56, 0.46) 52%, rgba(18, 16, 28, 0.44)),
+      rgba(37, 32, 56, 0.42);
+    --floating-glass-border: rgba(214, 191, 255, 0.32);
+    --floating-glass-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+    background: var(--floating-glass-bg);
+    border-color: var(--floating-glass-border);
+    box-shadow: var(--floating-glass-shadow);
+  }
+
   :root.dark .music-play-button:focus-visible,
   :root.dark .music-card-body:focus-visible {
     box-shadow: none;
@@ -1570,20 +1604,20 @@ body {
 
     .music-play-button:hover,
     .music-card-body:hover {
-      background: #fff;
-      box-shadow: none;
+      background: var(--floating-glass-bg);
+      box-shadow: var(--floating-glass-shadow);
     }
 
     .dashboard-theme-toggle [data-theme-toggle]:hover {
-      background: #fff;
-      box-shadow: none;
+      background: var(--floating-glass-bg);
+      box-shadow: var(--floating-glass-shadow);
     }
 
     :root.dark .music-play-button:hover,
     :root.dark .music-card-body:hover,
     :root.dark .dashboard-theme-toggle [data-theme-toggle]:hover {
-      background: #252038;
-      box-shadow: none;
+      background: var(--floating-glass-bg);
+      box-shadow: var(--floating-glass-shadow);
     }
   }
 
@@ -1609,9 +1643,9 @@ body {
     .dashboard-theme-toggle [data-theme-toggle]:hover,
     .dashboard-theme-toggle [data-theme-toggle]:active,
     .dashboard-theme-toggle [data-theme-toggle]:focus {
-      background: #fff;
-      border-color: rgba(195, 172, 255, 0.72);
-      box-shadow: none;
+      background: var(--floating-glass-bg);
+      border-color: var(--floating-glass-border);
+      box-shadow: var(--floating-glass-shadow);
       color: #7c52e6;
       outline: 0;
     }
@@ -1625,9 +1659,9 @@ body {
     :root.dark .dashboard-theme-toggle [data-theme-toggle]:hover,
     :root.dark .dashboard-theme-toggle [data-theme-toggle]:active,
     :root.dark .dashboard-theme-toggle [data-theme-toggle]:focus {
-      background: #252038;
-      border-color: rgba(214, 191, 255, 0.26);
-      box-shadow: none;
+      background: var(--floating-glass-bg);
+      border-color: var(--floating-glass-border);
+      box-shadow: var(--floating-glass-shadow);
       color: #d9c8ff;
       outline: 0;
     }
