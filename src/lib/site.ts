@@ -61,10 +61,6 @@ export const navGroups = [
     ]
   },
   {
-    label: '友链',
-    href: '/friends'
-  },
-  {
     label: '关于',
     href: '/about'
   }
