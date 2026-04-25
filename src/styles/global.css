@@ -1679,7 +1679,7 @@ body {
   }
 
   .sidebar-nav {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     margin-top: 0;
   }
 
@@ -1740,7 +1740,7 @@ body {
 
   .sidebar-nav {
     gap: 0.28rem;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .sidebar-nav a {
