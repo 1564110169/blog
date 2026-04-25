@@ -1,0 +1,45 @@
+---
+title: 用 Astro 搭一个轻盈的个人博客
+description: 从静态内容集合、MDX 到 GitHub Pages，一篇写给新博客的开场白。
+date: 2026-04-20
+category: tech
+tags:
+  - Astro
+  - TypeScript
+  - Tailwind CSS
+cover: /images/covers/cover-tech.svg
+---
+
+Astro 很适合拿来做个人博客：页面默认静态输出，内容可以用 Markdown 或 MDX 管理，组件只在需要时才发送 JavaScript。
+
+这篇文章是示例内容，你可以直接删除或改写它。
+
+## 内容集合
+
+文章放在 `src/content/blog` 下，frontmatter 会被 `src/content/config.ts` 校验。最常用的字段是：
+
+```yaml
+title: 文章标题
+description: 摘要
+date: 2026-04-20
+category: tech
+tags:
+  - Astro
+cover: /images/covers/cover-tech.svg
+```
+
+## 一点 TypeScript
+
+```ts
+type PostMeta = {
+  title: string;
+  tags: string[];
+  date: Date;
+};
+
+export function isFresh(date: Date) {
+  return Date.now() - date.valueOf() < 1000 * 60 * 60 * 24 * 30;
+}
+```
+
+后续你只要继续添加 `.md` 或 `.mdx` 文件，首页、归档、分类、标签、RSS 都会自动更新。

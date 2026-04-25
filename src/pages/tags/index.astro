@@ -1,0 +1,28 @@
+---
+import { getCollection } from 'astro:content';
+
+import PageHeader from '@/components/PageHeader.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { link } from '@/lib/paths';
+import { getTagCounts, slugify, sortPosts } from '@/lib/posts';
+
+const posts = sortPosts(await getCollection('blog'));
+const tagCounts = getTagCounts(posts);
+const tags = Object.keys(tagCounts).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+---
+
+<BaseLayout title="标签" description="按标签浏览文章。">
+  <PageHeader eyebrow="Tags" title="标签云" description="那些反复出现的关键词，会慢慢变成站点的纹理。" />
+  <section class="page-shell">
+    <div class="soft-card flex flex-wrap gap-3 p-6">
+      {
+        tags.map((tag) => (
+          <a class="tag-chip text-sm" href={link(`/tags/${slugify(tag)}`)}>
+            #{tag}
+            <span class="ml-1 text-slate-400">{tagCounts[tag]}</span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

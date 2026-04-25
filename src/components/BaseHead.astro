@@ -1,0 +1,49 @@
+---
+import { asset } from '@/lib/paths';
+import { SITE } from '@/lib/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+}
+
+const {
+  title = SITE.title,
+  description = SITE.description,
+  image = '/images/og-card.svg',
+  type = 'website'
+} = Astro.props;
+
+const pageTitle = title === SITE.title ? title : `${title} | ${SITE.title}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
+const imageUrl = new URL(asset(image), Astro.site ?? Astro.url.origin);
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<link rel="icon" href={asset('/favicon.svg')} type="image/svg+xml" />
+<link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href={asset('/rss.xml')} />
+
+<meta property="og:type" content={type} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+
+<script is:inline>
+  (() => {
+    const saved = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.classList.toggle('dark', saved ? saved === 'dark' : prefersDark);
+  })();
+</script>

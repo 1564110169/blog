@@ -1,0 +1,15 @@
+node_modules
+dist
+.astro
+.npm-cache
+.astro-preview.*.log
+.astro-dev.*.log
+.vercel
+.netlify
+.env
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dev-server.*.log

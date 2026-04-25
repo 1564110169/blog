@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Open graph placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1200" y1="0" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff7fb"/>
+      <stop offset=".54" stop-color="#eee8ff"/>
+      <stop offset="1" stop-color="#e8f7ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <path d="M812 56c123 29 254 24 388-17v178c-125 41-245 45-360 12-74-21-144-22-210-3V92c58-33 119-45 182-36z" fill="#ffc9df" opacity=".48"/>
+  <path d="M760 326c132-45 279-37 440 25v279H760z" fill="#bea9ff" opacity=".3"/>
+  <text x="86" y="260" fill="#181725" font-family="Arial, sans-serif" font-size="76" font-weight="800">悠的电子手账</text>
+  <text x="90" y="345" fill="#706a83" font-family="Arial, sans-serif" font-size="34">在电子世界里写点自己的碎碎念</text>
+  <rect x="90" y="420" width="260" height="58" rx="29" fill="#fb6fa5" opacity=".9"/>
+  <text x="126" y="459" fill="#fff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Astro Blog</text>
+</svg>

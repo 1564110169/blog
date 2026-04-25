@@ -1,0 +1,68 @@
+---
+import { getCollection } from 'astro:content';
+
+import { asset, link } from '@/lib/paths';
+import { getAllTags, getCategoryCounts, getTagCounts, slugify, sortPosts } from '@/lib/posts';
+import { categories, SITE } from '@/lib/site';
+
+const posts = sortPosts(await getCollection('blog'));
+const categoryCounts = getCategoryCounts(posts);
+const tagCounts = getTagCounts(posts);
+const tags = getAllTags(posts).slice(0, 18);
+const runningDays = Math.max(1, Math.ceil((Date.now() - new Date(SITE.startDate).valueOf()) / 1000 / 60 / 60 / 24));
+---
+
+<aside class="right-panel">
+  <section class="panel-card about-card">
+    <div class="about-head">
+      <img src={asset('/images/avatar-placeholder.png')} alt="悠的头像" />
+      <div>
+        <p>关于我</p>
+        <h2>悠</h2>
+      </div>
+    </div>
+    <p class="about-text">喜欢把游戏、动漫、代码和夜里的灵感收进博客。这里会放技术笔记，也会放没有结论的碎碎念。</p>
+  </section>
+
+  <section class="panel-card">
+    <div class="panel-title">
+      <span>分类统计</span>
+      <a href={link('/categories')}>全部</a>
+    </div>
+    <div class="category-list">
+      {
+        categories.map((category) => (
+          <a href={link(`/categories/${category.slug}`)}>
+            <span>{category.name}</span>
+            <strong>{categoryCounts[category.slug] ?? 0}</strong>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="panel-card">
+    <div class="panel-title">
+      <span>标签云</span>
+      <a href={link('/tags')}>更多</a>
+    </div>
+    <div class="tag-cloud">
+      {tags.map((tag) => <a href={link(`/tags/${slugify(tag)}`)}>{tag}<em>{tagCounts[tag]}</em></a>)}
+    </div>
+  </section>
+
+  <section class="panel-card site-stats">
+    <div>
+      <strong>{posts.length}</strong>
+      <span>文章</span>
+    </div>
+    <div>
+      <strong>{tags.length}</strong>
+      <span>标签</span>
+    </div>
+    <div>
+      <strong>{runningDays}</strong>
+      <span>天</span>
+    </div>
+  </section>
+</aside>

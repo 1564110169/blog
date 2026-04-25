@@ -1,0 +1,283 @@
+---
+import { asset, link } from '@/lib/paths';
+import ThemeToggle from './ThemeToggle.astro';
+
+const navItems = [
+  { label: '首页', href: '/' },
+  { label: '归档', href: '/archive' },
+  { label: '分类', href: '/categories' },
+  { label: '标签', href: '/tags' },
+  { label: '友链', href: '/friends' },
+  { label: '关于', href: '/about' }
+];
+
+const playlistSrc = 'https://music.163.com/outchain/player?type=0&id=399279457&auto=1&height=430';
+const currentTrackTitle = '悠の歌单';
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+
+function isActive(href: string) {
+  const target = link(href).replace(/\/$/, '') || '/';
+  if (href === '/') return currentPath === target;
+  return currentPath === target || currentPath.startsWith(`${target}/`);
+}
+---
+
+<aside class="left-sidebar">
+  <a class="sidebar-profile" href={link('/about')} aria-label="关于悠">
+    <img class="sidebar-avatar" src={asset('/images/avatar-placeholder.png')} alt="悠的头像" />
+    <span class="sidebar-name">悠</span>
+    <span class="sidebar-sign">自由职业 / 游戏 / 动漫 / 编程</span>
+  </a>
+
+  <nav class="sidebar-nav" aria-label="主导航">
+    {navItems.map((item) => <a class:list={[isActive(item.href) && 'is-active']} href={link(item.href)}>{item.label}</a>)}
+  </nav>
+
+  <div
+    class="music-player is-playing"
+    data-music-player
+    data-playlist-src={playlistSrc}
+    data-track-title={currentTrackTitle}
+  >
+    <div class="music-panel" data-music-panel>
+      <iframe
+        data-music-iframe
+        title="网易云音乐歌单播放器"
+        src={playlistSrc}
+        width="100%"
+        height="450"
+        frameborder="no"
+        border="0"
+        marginwidth="0"
+        marginheight="0"
+        allow="autoplay; encrypted-media"
+      ></iframe>
+    </div>
+
+    <div class="music-card">
+      <button class="music-play-button" type="button" aria-label="暂停悠の歌单" aria-pressed="true" data-music-play-toggle>
+        <span class="music-play-icon" aria-hidden="true">
+          <span class="music-icon music-icon-play"></span>
+          <span class="music-icon music-icon-pause"></span>
+        </span>
+      </button>
+      <button class="music-card-body min-w-0" type="button" aria-label="打开或收起网易云歌单播放器" aria-expanded="false" data-music-toggle>
+        <p class="music-label" data-music-status>Now Playing</p>
+        <p class="music-title" data-music-title>{currentTrackTitle}</p>
+        <div class="music-bars" aria-hidden="true">
+          <i></i><i></i><i></i><i></i>
+        </div>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<div class="dashboard-theme-toggle">
+  <ThemeToggle />
+</div>
+
+<div class="mobile-sidebar-card">
+  <img class="sidebar-avatar" src={asset('/images/avatar-placeholder.png')} alt="悠的头像" />
+  <div>
+    <p class="sidebar-name">悠</p>
+    <p class="sidebar-sign">自由职业 / 游戏 / 动漫 / 编程</p>
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    function syncSidebarNav(pathname = window.location.pathname) {
+      const navLinks = Array.from(document.querySelectorAll('.sidebar-nav a'));
+      const currentPath = pathname.replace(/\/$/, '') || '/';
+      for (const link of navLinks) {
+        const target = new URL(link.href, window.location.href).pathname.replace(/\/$/, '') || '/';
+        const isHome = target === '/blog' || target === '/';
+        const isActive = isHome ? currentPath === target : currentPath === target || currentPath.startsWith(`${target}/`);
+        link.classList.toggle('is-active', isActive);
+      }
+    }
+
+    window.yuuSyncSidebarNav = syncSidebarNav;
+    syncSidebarNav();
+  })();
+</script>
+
+<script is:inline>
+  (() => {
+    function bindMusicPlayer() {
+      const player = document.querySelector('[data-music-player]');
+      const toggle = player?.querySelector('[data-music-toggle]');
+      const playToggle = player?.querySelector('[data-music-play-toggle]');
+      const iframe = player?.querySelector('[data-music-iframe]');
+      const status = player?.querySelector('[data-music-status]');
+      const title = player?.querySelector('[data-music-title]');
+      const playlistSrc = player?.dataset.playlistSrc || '';
+      const trackTitle = player?.dataset.trackTitle || '当前歌曲';
+      if (!player || !toggle || !playToggle || !iframe) return;
+
+      function setPlaying(isPlaying) {
+        player.classList.toggle('is-playing', isPlaying);
+        playToggle.setAttribute('aria-pressed', String(isPlaying));
+        playToggle.setAttribute('aria-label', isPlaying ? '暂停悠の歌单' : '播放悠の歌单');
+        if (status) status.textContent = isPlaying ? 'Now Playing' : 'Paused';
+        if (title) title.textContent = trackTitle;
+
+        if (isPlaying && playlistSrc && iframe.getAttribute('src') !== playlistSrc) {
+          iframe.setAttribute('src', playlistSrc);
+        }
+
+        if (!isPlaying) {
+          player.classList.remove('is-open');
+          toggle.setAttribute('aria-expanded', 'false');
+          iframe.setAttribute('src', 'about:blank');
+        }
+      }
+
+      if (toggle.dataset.musicBound !== 'true') {
+        toggle.dataset.musicBound = 'true';
+        toggle.addEventListener('click', () => {
+          if (!player.classList.contains('is-playing')) {
+            setPlaying(true);
+          }
+          const isOpen = player.classList.toggle('is-open');
+          toggle.setAttribute('aria-expanded', String(isOpen));
+        });
+      }
+
+      if (playToggle.dataset.musicBound !== 'true') {
+        playToggle.dataset.musicBound = 'true';
+        playToggle.addEventListener('click', () => {
+          playToggle.classList.remove('is-tapping');
+          void playToggle.offsetWidth;
+          playToggle.classList.add('is-tapping');
+          setPlaying(!player.classList.contains('is-playing'));
+        });
+
+        playToggle.addEventListener('animationend', () => {
+          playToggle.classList.remove('is-tapping');
+        });
+      }
+
+      setPlaying(player.classList.contains('is-playing'));
+    }
+
+    bindMusicPlayer();
+    if (!window.yuuMusicPlayerListenerBound) {
+      window.yuuMusicPlayerListenerBound = true;
+      document.addEventListener('yuu:page-load', bindMusicPlayer);
+    }
+  })();
+</script>
+
+<script is:inline>
+  (() => {
+    if (window.yuuShellRouterBound) return;
+    window.yuuShellRouterBound = true;
+
+    const parser = new DOMParser();
+
+    function updateHead(doc) {
+      document.title = doc.title;
+      for (const selector of [
+        'meta[name="description"]',
+        'link[rel="canonical"]',
+        'meta[property="og:type"]',
+        'meta[property="og:title"]',
+        'meta[property="og:description"]',
+        'meta[property="og:url"]',
+        'meta[property="og:image"]',
+        'meta[name="twitter:title"]',
+        'meta[name="twitter:description"]',
+        'meta[name="twitter:image"]'
+      ]) {
+        const current = document.head.querySelector(selector);
+        const next = doc.head.querySelector(selector);
+        if (current && next) current.replaceWith(next.cloneNode(true));
+      }
+    }
+
+    function replaceRightPanel(currentFrame, nextFrame) {
+      const currentRightPanel = currentFrame.querySelector(':scope > .right-panel');
+      const nextRightPanel = nextFrame.querySelector(':scope > .right-panel');
+
+      if (currentRightPanel && nextRightPanel) {
+        currentRightPanel.replaceWith(nextRightPanel.cloneNode(true));
+        return;
+      }
+
+      if (currentRightPanel && !nextRightPanel) {
+        currentRightPanel.remove();
+        return;
+      }
+
+      if (!currentRightPanel && nextRightPanel) {
+        currentFrame.append(nextRightPanel.cloneNode(true));
+      }
+    }
+
+    async function navigateTo(rawUrl, options = {}) {
+      const url = new URL(rawUrl, window.location.href);
+      try {
+        const response = await fetch(url.href, {
+          headers: {
+            'X-Requested-With': 'yuu-shell-router'
+          }
+        });
+        if (!response.ok) throw new Error(`Navigation failed: ${response.status}`);
+
+        const doc = parser.parseFromString(await response.text(), 'text/html');
+        const currentFrame = document.querySelector('.site-frame');
+        const nextFrame = doc.querySelector('.site-frame');
+        const currentMain = document.querySelector('.content-column');
+        const nextMain = doc.querySelector('.content-column');
+
+        if (!currentFrame || !nextFrame || !currentMain || !nextMain) {
+          window.location.href = url.href;
+          return;
+        }
+
+        updateHead(doc);
+        document.body.className = doc.body.className;
+        currentFrame.className = nextFrame.className;
+        currentMain.replaceWith(nextMain.cloneNode(true));
+        replaceRightPanel(currentFrame, nextFrame);
+
+        if (!options.replace) {
+          history.pushState({}, '', url.href);
+        }
+
+        window.yuuSyncSidebarNav?.(url.pathname);
+        document.dispatchEvent(new Event('yuu:page-load'));
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } catch {
+        window.location.href = url.href;
+      }
+    }
+
+    document.addEventListener(
+      'click',
+      (event) => {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+          return;
+        }
+
+        const link = event.target instanceof Element ? event.target.closest('a') : null;
+        if (!link || link.target || link.hasAttribute('download')) return;
+
+        const url = new URL(link.href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+
+        const samePage = url.pathname === window.location.pathname;
+        if (samePage && url.hash) return;
+
+        event.preventDefault();
+        navigateTo(url.href);
+      },
+      true
+    );
+
+    window.addEventListener('popstate', () => {
+      navigateTo(window.location.href, { replace: true });
+    });
+  })();
+</script>

@@ -1,0 +1,83 @@
+<button
+  data-theme-toggle
+  class="inline-flex h-10 w-10 items-center justify-center rounded-card border fine-line bg-white/60 text-base shadow-sm backdrop-blur transition duration-[240ms] ease-out hover:-translate-y-px hover:bg-white dark:bg-white/10"
+  type="button"
+  aria-label="切换深色模式"
+  title="切换深色模式"
+>
+  <span class="theme-icon-light" aria-hidden="true">☾</span>
+  <span class="theme-icon-dark hidden" aria-hidden="true">☀</span>
+</button>
+
+<script is:inline>
+  (() => {
+    const root = document.documentElement;
+    const toggles = document.querySelectorAll('[data-theme-toggle]');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let themeTimer;
+
+    function syncThemeIcons() {
+      const isDark = root.classList.contains('dark');
+      for (const toggle of toggles) {
+        const lightIcon = toggle.querySelector('.theme-icon-light');
+        const darkIcon = toggle.querySelector('.theme-icon-dark');
+        lightIcon?.classList.toggle('hidden', isDark);
+        darkIcon?.classList.toggle('hidden', !isDark);
+        toggle.setAttribute('aria-label', isDark ? '切换到白天模式' : '切换到黑暗模式');
+        toggle.setAttribute('title', isDark ? '切换到白天模式' : '切换到黑暗模式');
+        toggle.setAttribute('aria-pressed', String(isDark));
+      }
+    }
+
+    function commitTheme(isDark) {
+      root.classList.toggle('dark', isDark);
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      syncThemeIcons();
+    }
+
+    function finishFallbackTransition() {
+      window.clearTimeout(themeTimer);
+      themeTimer = window.setTimeout(() => {
+        root.classList.remove('theme-switching');
+      }, 420);
+    }
+
+    function toggleTheme() {
+      const nextIsDark = !root.classList.contains('dark');
+      window.clearTimeout(themeTimer);
+
+      if (prefersReducedMotion.matches) {
+        root.classList.remove('theme-switching', 'theme-view-transitioning');
+        commitTheme(nextIsDark);
+        return;
+      }
+
+      if (document.startViewTransition) {
+        root.classList.add('theme-view-transitioning');
+        try {
+          const transition = document.startViewTransition(() => {
+            commitTheme(nextIsDark);
+          });
+          transition.finished.finally(() => {
+            root.classList.remove('theme-view-transitioning');
+          });
+          return;
+        } catch {
+          root.classList.remove('theme-view-transitioning');
+        }
+      }
+
+      root.classList.add('theme-switching');
+      commitTheme(nextIsDark);
+      finishFallbackTransition();
+    }
+
+    for (const toggle of toggles) {
+      if (toggle.dataset.themeToggleBound === 'true') continue;
+      toggle.dataset.themeToggleBound = 'true';
+      toggle.addEventListener('click', toggleTheme);
+    }
+
+    syncThemeIcons();
+  })();
+</script>

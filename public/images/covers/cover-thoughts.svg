@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Thoughts cover placeholder">
+  <rect width="960" height="540" fill="#fff7fb"/>
+  <path d="M0 66c122 36 245 34 370-6v170c-112 36-226 39-342 10-10-3-19-5-28-7z" fill="#ffc9df" opacity=".58"/>
+  <path d="M620 268c111-35 224-29 340 18v254H620z" fill="#dacfff" opacity=".48"/>
+  <path d="M120 360c130-120 270-125 420-20 88 62 175 71 300 20v180H120z" fill="#fff" opacity=".64"/>
+  <path d="M460 120c25 32 25 64 0 96-25-32-25-64 0-96zM530 190c32 25 64 25 96 0-32-25-64-25-96 0z" fill="#fb6fa5" opacity=".48"/>
+  <text x="92" y="480" fill="#181725" font-family="Arial, sans-serif" font-size="42" font-weight="800">Spring Notes</text>
+</svg>

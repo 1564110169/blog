@@ -1,0 +1,54 @@
+---
+import BaseHead from '@/components/BaseHead.astro';
+import CursorAura from '@/components/CursorAura.astro';
+import Footer from '@/components/Footer.astro';
+import Nav from '@/components/Nav.astro';
+import RightPanel from '@/components/RightPanel.astro';
+import SakuraBackdrop from '@/components/SakuraBackdrop.astro';
+import Sidebar from '@/components/Sidebar.astro';
+import '@/styles/global.css';
+import '@/styles/dashboard.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  dashboard?: boolean;
+  rightPanel?: boolean;
+}
+
+const { title, description, image, type, dashboard = true, rightPanel = true } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <BaseHead title={title} description={description} image={image} type={type} />
+  </head>
+  <body class={dashboard ? 'anime-body antialiased' : 'antialiased'}>
+    <SakuraBackdrop />
+    <CursorAura />
+    {
+      dashboard ? (
+        <>
+          <Sidebar />
+          <div class:list={['site-frame', !rightPanel && 'site-frame-single']}>
+            <main class="content-column motion-stage">
+              <slot />
+            </main>
+            {rightPanel && <RightPanel />}
+          </div>
+        </>
+      ) : (
+        <>
+          <Nav />
+          <main class="motion-stage">
+            <slot />
+          </main>
+          <Footer />
+        </>
+      )
+    }
+  </body>
+</html>

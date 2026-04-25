@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Review cover placeholder">
+  <rect width="960" height="540" fill="#181725"/>
+  <path d="M620 70c116 40 229 39 340-4v176c-102 34-201 35-298 4-61-20-119-20-174-1V112c42-34 86-48 132-42z" fill="#fb6fa5" opacity=".54"/>
+  <path d="M626 316c111-45 222-41 334 12v212H626z" fill="#7c52e6" opacity=".38"/>
+  <rect x="90" y="110" width="580" height="326" rx="28" fill="#fff" opacity=".12"/>
+  <path d="M150 176h72l24 54 28-54h72l24 54 28-54h72l24 54 28-54h72" fill="none" stroke="#fff7fb" stroke-linecap="round" stroke-width="18" opacity=".72"/>
+  <text x="94" y="492" fill="#fff7fb" font-family="Arial, sans-serif" font-size="42" font-weight="800">Afterglow</text>
+</svg>

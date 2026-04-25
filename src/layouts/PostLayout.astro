@@ -1,0 +1,74 @@
+---
+import type { BlogPost } from '@/lib/posts';
+import { formatDate, getReadingTime, slugify } from '@/lib/posts';
+import { asset, link } from '@/lib/paths';
+import { getCategoryName } from '@/lib/site';
+
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  post: BlogPost;
+  newer?: BlogPost;
+  older?: BlogPost;
+}
+
+const { post, newer, older } = Astro.props;
+const cover = post.data.cover ?? '/images/covers/default.svg';
+---
+
+<BaseLayout title={post.data.title} description={post.data.description} image={cover} type="article" rightPanel={false}>
+  <article class="page-shell py-10">
+    <header class="overflow-hidden rounded-card border fine-line bg-white/60 shadow-soft backdrop-blur-xl dark:bg-white/5">
+      <img class="h-[260px] w-full object-cover sm:h-[380px]" src={asset(cover)} alt="" />
+      <div class="p-6 sm:p-10">
+        <div class="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+          <a class="tag-chip" href={link(`/archive/${post.data.category}`)}>{getCategoryName(post.data.category)}</a>
+          <span>{formatDate(post.data.date)}</span>
+          <span>·</span>
+          <span>{getReadingTime(post.body)} 分钟阅读</span>
+        </div>
+        <h1 class="mt-5 font-display text-4xl font-black leading-tight text-ink-900 dark:text-white sm:text-5xl">
+          {post.data.title}
+        </h1>
+        <p class="mt-4 max-w-3xl text-lg leading-8 text-slate-600 dark:text-slate-300">{post.data.description}</p>
+        <div class="mt-6 flex flex-wrap gap-2">
+          {post.data.tags.map((tag) => <a class="tag-chip" href={link(`/tags/${slugify(tag)}`)}>#{tag}</a>)}
+        </div>
+      </div>
+    </header>
+
+    <div class="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <div class="soft-card p-6 sm:p-9">
+        <div class="prose-yume">
+          <slot />
+        </div>
+      </div>
+
+      <aside class="space-y-4 lg:sticky lg:top-6 lg:self-start">
+        <div class="soft-card p-5">
+          <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Article</p>
+          <p class="mt-2 font-display text-2xl font-black text-ink-900 dark:text-white">{getReadingTime(post.body)} min</p>
+          <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">慢慢读，咖啡还热着。</p>
+        </div>
+        <div class="grid gap-3">
+          {
+            newer && (
+              <a class="soft-card block p-4" href={link(`/posts/${newer.slug}`)}>
+                <span class="text-xs font-bold text-sakura-500 dark:text-sakura-200">上一篇</span>
+                <strong class="mt-1 block text-sm leading-6 text-ink-900 dark:text-white">{newer.data.title}</strong>
+              </a>
+            )
+          }
+          {
+            older && (
+              <a class="soft-card block p-4" href={link(`/posts/${older.slug}`)}>
+                <span class="text-xs font-bold text-yume-500 dark:text-yume-200">下一篇</span>
+                <strong class="mt-1 block text-sm leading-6 text-ink-900 dark:text-white">{older.data.title}</strong>
+              </a>
+            )
+          }
+        </div>
+      </aside>
+    </div>
+  </article>
+</BaseLayout>

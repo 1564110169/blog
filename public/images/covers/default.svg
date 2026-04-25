@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Default cover placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="960" y1="0" y2="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff7fb"/>
+      <stop offset=".52" stop-color="#eee8ff"/>
+      <stop offset="1" stop-color="#e8f7ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg)"/>
+  <path d="M600 70c109 31 229 27 360-12v160c-118 37-228 39-330 5-58-19-113-20-166-3V104c44-30 89-41 136-34z" fill="#ffc9df" opacity=".42"/>
+  <path d="M640 328c97-35 203-31 320 12v200H640z" fill="#bea9ff" opacity=".3"/>
+  <path d="M120 360c88-58 174-62 258-12 78 47 156 45 236-8 64-42 137-47 220-14v214H120z" fill="#fff" opacity=".56"/>
+  <text x="84" y="146" fill="#181725" font-family="Arial, sans-serif" font-size="52" font-weight="800">Yume Notes</text>
+  <text x="88" y="205" fill="#706a83" font-family="Arial, sans-serif" font-size="24">Cover placeholder</text>
+</svg>

@@ -1,0 +1,86 @@
+---
+import { link } from '@/lib/paths';
+import { navGroups, SITE } from '@/lib/site';
+
+import ThemeToggle from './ThemeToggle.astro';
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+
+function isActive(href: string) {
+  const target = link(href).replace(/\/$/, '') || '/';
+  if (href === '/') return currentPath === target;
+  return currentPath === target || currentPath.startsWith(`${target}/`);
+}
+---
+
+<header class="sticky top-0 z-50 border-b fine-line bg-[var(--nav-bg)] backdrop-blur-xl">
+  <nav class="page-shell flex h-16 items-center justify-between gap-4">
+    <a class="group inline-flex items-center gap-3" href={link('/')}>
+      <span class="grid h-10 w-10 place-items-center rounded-card bg-ink-900 font-display text-lg font-black text-white shadow-soft transition-transform duration-[240ms] ease-out group-hover:-translate-y-px dark:bg-white dark:text-ink-900">
+        悠
+      </span>
+      <span class="hidden sm:inline">
+        <span class="block font-display text-lg font-black leading-5 text-ink-900 dark:text-white">{SITE.shortTitle}Log</span>
+        <span class="block text-[11px] font-bold leading-4 text-slate-500 dark:text-slate-400">{SITE.title}</span>
+      </span>
+    </a>
+
+    <div class="hidden items-center gap-1 rounded-card border fine-line bg-white/45 p-1 shadow-sm backdrop-blur lg:flex dark:bg-white/5">
+      {
+        navGroups.map((item) =>
+          item.children ? (
+            <div class="group relative">
+              <a class:list={['nav-link inline-flex items-center gap-1', isActive(item.href) && 'nav-link-active']} href={link(item.href)}>
+                {item.label}
+                <span aria-hidden="true">⌄</span>
+              </a>
+              <div class="pointer-events-none absolute left-0 top-full w-36 pt-3 opacity-0 transition-opacity duration-[240ms] ease-out group-hover:pointer-events-auto group-hover:opacity-100">
+                <div class="glass rounded-card p-2">
+                  {item.children.map((child) => (
+                    <a class:list={['block rounded-card px-3 py-2 text-sm font-bold text-slate-700 hover:bg-white/70 hover:text-sakura-500 dark:text-slate-200 dark:hover:bg-white/10', isActive(child.href) && 'text-sakura-500 dark:text-sakura-200']} href={link(child.href)}>
+                      {child.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <a class:list={['nav-link', isActive(item.href) && 'nav-link-active']} href={link(item.href)}>
+              {item.label}
+            </a>
+          )
+        )
+      }
+    </div>
+
+    <div class="flex items-center gap-2">
+      <ThemeToggle />
+      <details class="relative lg:hidden">
+        <summary class="inline-flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-card border fine-line bg-white/60 shadow-sm backdrop-blur marker:hidden dark:bg-white/10">
+          <span class="sr-only">打开导航</span>
+          <span aria-hidden="true">☰</span>
+        </summary>
+        <div class="glass absolute right-0 top-12 w-56 rounded-card p-3">
+          {
+            navGroups.map((item) => (
+              <div class="py-1">
+                <a class:list={['block rounded-card px-3 py-2 text-sm font-bold text-slate-700 hover:bg-white/70 hover:text-sakura-500 dark:text-slate-200 dark:hover:bg-white/10', isActive(item.href) && 'text-sakura-500 dark:text-sakura-200']} href={link(item.href)}>
+                  {item.label}
+                </a>
+                {item.children && (
+                  <div class="ml-3 border-l border-sakura-200/70 pl-2 dark:border-white/10">
+                    {item.children.map((child) => (
+                      <a class="block rounded-card px-3 py-1.5 text-sm text-slate-600 hover:bg-white/60 hover:text-sakura-500 dark:text-slate-300 dark:hover:bg-white/10" href={link(child.href)}>
+                        {child.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          }
+        </div>
+      </details>
+    </div>
+  </nav>
+</header>

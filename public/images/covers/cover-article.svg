@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Article cover placeholder">
+  <rect width="960" height="540" fill="#f6fbff"/>
+  <path d="M602 62c112 32 231 28 358-12v164c-115 35-222 37-322 6-62-19-120-20-174-3V102c43-30 89-44 138-40z" fill="#b7e4ff" opacity=".68"/>
+  <path d="M628 328c107-39 218-35 332 12v200H628z" fill="#ffc9df" opacity=".4"/>
+  <rect x="110" y="100" width="320" height="380" rx="24" fill="#fff" opacity=".78"/>
+  <rect x="470" y="150" width="310" height="250" rx="24" fill="#fff" opacity=".58"/>
+  <path d="M160 170h190M160 225h160M160 280h210M160 335h150" stroke="#ed4d8c" stroke-linecap="round" stroke-width="18" opacity=".58"/>
+  <text x="92" y="492" fill="#181725" font-family="Arial, sans-serif" font-size="42" font-weight="800">Article</text>
+</svg>

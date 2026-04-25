@@ -1,0 +1,23 @@
+---
+import PageHeader from '@/components/PageHeader.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { asset } from '@/lib/paths';
+import { friends } from '@/data/friends';
+---
+
+<BaseLayout title="友链" description="一些值得拜访的朋友和站点。">
+  <PageHeader eyebrow="Friends" title="友链" description="互联网很大，幸好还有这些会发光的小房间。" />
+  <section class="page-shell grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+    {
+      friends.map((friend) => (
+        <a class="soft-card flex items-start gap-4 p-5" href={friend.href} target="_blank" rel="noreferrer">
+          <img class="h-14 w-14 rounded-full border-2 border-white object-cover dark:border-white/10" src={asset(friend.avatar)} alt="" />
+          <div>
+            <h2 class="font-display text-xl font-extrabold text-ink-900 dark:text-white">{friend.name}</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{friend.description}</p>
+          </div>
+        </a>
+      ))
+    }
+  </section>
+</BaseLayout>

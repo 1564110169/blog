@@ -1,0 +1,62 @@
+---
+import type { BlogPost } from '@/lib/posts';
+import { formatDate, getReadingTime, slugify } from '@/lib/posts';
+import { asset, link } from '@/lib/paths';
+import { getCategoryName } from '@/lib/site';
+
+interface Props {
+  post: BlogPost;
+  compact?: boolean;
+  feature?: boolean;
+  reverse?: boolean;
+}
+
+const { post, compact = false, feature = false, reverse = false } = Astro.props;
+const cover = post.data.cover ?? '/images/covers/default.svg';
+---
+
+<article
+  class:list={[
+    'soft-card article-card group overflow-hidden',
+    compact && 'grid sm:grid-cols-[220px_1fr]',
+    feature && 'article-card-feature md:grid md:grid-cols-2',
+    feature && reverse && 'article-card-reverse'
+  ]}
+>
+  <a class="article-card-cover relative block overflow-hidden" href={link(`/posts/${post.slug}`)} aria-label={`阅读 ${post.data.title}`}>
+    <img
+      class:list={[
+        'h-52 w-full object-cover transition-transform duration-[280ms] ease-out group-hover:scale-[1.03]',
+        compact && 'sm:h-full',
+        feature && 'md:h-full md:min-h-[300px]'
+      ]}
+      src={asset(cover)}
+      alt={post.data.title}
+      loading="lazy"
+    />
+    <span class="absolute left-4 top-4 rounded-card bg-white/82 px-3 py-1 text-xs font-black text-sakura-500 shadow-sm backdrop-blur dark:bg-ink-950/72 dark:text-sakura-200">
+      {getCategoryName(post.data.category)}
+    </span>
+  </a>
+  <div class:list={['article-card-body p-5 sm:p-6', feature && 'flex flex-col justify-center md:min-h-[300px] md:p-8']}>
+    <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+      <span>{formatDate(post.data.date)}</span>
+      <span>·</span>
+      <span>{getReadingTime(post.body)} 分钟</span>
+    </div>
+    <h2 class:list={['mt-4 font-display font-extrabold leading-snug text-ink-900 transition-colors duration-[240ms] ease-out group-hover:text-sakura-500 dark:text-white dark:group-hover:text-sakura-200', feature ? 'text-2xl sm:text-3xl' : 'text-xl']}>
+      <a href={link(`/posts/${post.slug}`)}>{post.data.title}</a>
+    </h2>
+    <p class:list={['mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300', feature ? 'line-clamp-3 sm:text-base sm:leading-7' : 'line-clamp-2']}>
+      {post.data.description}
+    </p>
+    <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap gap-2">
+        {post.data.tags.slice(0, 3).map((tag) => <a class="tag-chip" href={link(`/tags/${slugify(tag)}`)}>#{tag}</a>)}
+      </div>
+      <a class="text-sm font-black text-sakura-500 opacity-0 transition-opacity duration-[240ms] ease-out group-hover:opacity-100 dark:text-sakura-200" href={link(`/posts/${post.slug}`)} aria-label={`阅读 ${post.data.title}`}>
+        Read
+      </a>
+    </div>
+  </div>
+</article>

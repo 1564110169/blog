@@ -1,0 +1,37 @@
+---
+import PageHeader from '@/components/PageHeader.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { asset } from '@/lib/paths';
+---
+
+<BaseLayout title="关于我" description="关于站长悠和这个博客。">
+  <PageHeader eyebrow="About" title="关于我" description="一个喜欢把日常折成小纸条的人。" />
+  <section class="page-shell grid gap-8 lg:grid-cols-[320px_1fr]">
+    <aside class="soft-card p-6 text-center">
+      <img class="mx-auto h-32 w-32 rounded-full border-4 border-white object-cover shadow-soft dark:border-white/10" src={asset('/images/avatar-placeholder.png')} alt="悠的头像" />
+      <h2 class="mt-5 font-display text-3xl font-black text-ink-900 dark:text-white">悠</h2>
+      <p class="mt-2 text-sm font-semibold text-sakura-500 dark:text-sakura-200">Frontend / Notes / Anime</p>
+      <p class="mt-5 text-sm leading-7 text-slate-600 dark:text-slate-300">
+        白天和代码打交道，夜里把灵感、故事和一点点情绪收进博客。
+      </p>
+    </aside>
+    <div class="soft-card p-6 sm:p-8">
+      <div class="prose-yume">
+        <h2>你好，这里是悠的电子手账</h2>
+        <p>
+          这个博客用于记录技术笔记、阅读感想、追番清单和日常碎碎念。它是纯静态的 Astro 项目，部署到 GitHub Pages 后不需要后端服务。
+        </p>
+        <h3>我会写些什么</h3>
+        <ul>
+          <li>前端工程、Astro、TypeScript 和工具链笔记。</li>
+          <li>书、电影、动画和音乐带来的灵感。</li>
+          <li>一些不一定有答案，但很想留下来的生活片段。</li>
+        </ul>
+        <h3>最近的关键词</h3>
+        <p>
+          静态站点、深夜电台、纸质书、季节限定饮料，以及那些看完之后还会想很久的动画。
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

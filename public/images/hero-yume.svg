@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 760" role="img" aria-label="Soft anime blog hero placeholder">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1440" y1="0" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff7fb"/>
+      <stop offset=".45" stop-color="#f3edff"/>
+      <stop offset="1" stop-color="#e8f7ff"/>
+    </linearGradient>
+    <linearGradient id="sunset" x1="0" x2="0" y1="120" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffc9df" stop-opacity=".78"/>
+      <stop offset=".62" stop-color="#bea9ff" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#7dd3fc" stop-opacity=".32"/>
+    </linearGradient>
+  </defs>
+  <rect width="1440" height="760" fill="url(#sky)"/>
+  <path d="M850 80c128 28 254 26 382-4 72-17 141-16 208 5v128c-83-28-166-31-250-8-126 34-239 31-340-9z" fill="#fff" opacity=".5"/>
+  <path d="M1020 210c138 14 278 4 420-30v230c-112 35-223 41-333 18-92-19-178-14-258 17v-164c52-47 109-70 171-71z" fill="#ffc9df" opacity=".32"/>
+  <path d="M950 420c128-38 254-39 378-3 39 11 76 17 112 16v221H950z" fill="#bea9ff" opacity=".26"/>
+  <path d="M0 558c167-80 292-76 423-35 164 50 322 44 488-27 176-76 324-62 529 38v226H0z" fill="url(#sunset)"/>
+  <path d="M855 514c50-83 160-130 273-114 101 15 193 76 251 166v194H855z" fill="#ffffff" opacity=".36"/>
+  <path d="M954 467h264c16 0 29 13 29 29v156H925V496c0-16 13-29 29-29z" fill="#fff" opacity=".56"/>
+  <path d="M982 504h50v50h-50zm77 0h50v50h-50zm77 0h50v50h-50zm-154 74h50v50h-50zm77 0h50v50h-50zm77 0h50v50h-50z" fill="#dacfff" opacity=".78"/>
+  <path d="M781 635c70-18 113-62 128-132 43 64 104 99 184 104-63 30-110 78-140 144-43-61-100-99-172-116z" fill="#fff7fb" opacity=".75"/>
+  <g fill="#fb6fa5" opacity=".38">
+    <path d="M274 168c14 18 14 36 0 54-14-18-14-36 0-54z"/>
+    <path d="M320 241c18 14 36 14 54 0-18-14-36-14-54 0z"/>
+    <path d="M1186 142c14 18 14 36 0 54-14-18-14-36 0-54z"/>
+    <path d="M1114 352c18 14 36 14 54 0-18-14-36-14-54 0z"/>
+  </g>
+</svg>

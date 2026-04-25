@@ -1,0 +1,43 @@
+---
+import { getCollection } from 'astro:content';
+
+import Hero from '@/components/Hero.astro';
+import PostCard from '@/components/PostCard.astro';
+import MainLayout from '@/layouts/MainLayout.astro';
+import { link } from '@/lib/paths';
+import { sortPosts } from '@/lib/posts';
+
+const posts = sortPosts(await getCollection('blog'));
+const latestPosts = posts.slice(0, 6);
+const recommendedPosts = posts.filter((post) => post.data.category === 'tech' || post.data.category === 'reviews').slice(0, 3);
+---
+
+<MainLayout title="首页">
+  <Hero />
+
+  <section id="latest" class="home-section">
+    <div class="section-head">
+      <div>
+        <p>Latest Posts</p>
+        <h2>最新文章</h2>
+      </div>
+      <a href={link('/archive')}>查看归档</a>
+    </div>
+    <div class="post-grid">
+      {latestPosts.map((post, index) => <PostCard post={post} featured={index === 0} />)}
+    </div>
+  </section>
+
+  <section class="home-section">
+    <div class="section-head">
+      <div>
+        <p>Recommended</p>
+        <h2>推荐文章</h2>
+      </div>
+      <a href={link('/categories')}>浏览分类</a>
+    </div>
+    <div class="recommend-grid">
+      {recommendedPosts.map((post) => <PostCard post={post} compact />)}
+    </div>
+  </section>
+</MainLayout>

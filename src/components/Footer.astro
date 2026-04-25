@@ -1,0 +1,17 @@
+---
+import { link } from '@/lib/paths';
+import { SITE } from '@/lib/site';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-20 border-t fine-line bg-white/38 py-10 backdrop-blur dark:bg-white/5">
+  <div class="page-shell flex flex-col gap-4 text-sm text-slate-600 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+    <p class="font-bold">© {year} {SITE.author}. Powered by Astro, Markdown and a little daydream.</p>
+    <div class="flex flex-wrap gap-3">
+      <a class="font-bold hover:text-sakura-500" href={link('/rss.xml')}>RSS</a>
+      <a class="font-bold hover:text-sakura-500" href={link('/sitemap-index.xml')}>Sitemap</a>
+      <a class="font-bold hover:text-sakura-500" href={link('/about')}>About</a>
+    </div>
+  </div>
+</footer>

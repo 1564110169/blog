@@ -1,0 +1,35 @@
+---
+import { getCollection } from 'astro:content';
+
+import ArticleCard from '@/components/ArticleCard.astro';
+import PageHeader from '@/components/PageHeader.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { sortPosts } from '@/lib/posts';
+import { categories } from '@/lib/site';
+
+export function getStaticPaths() {
+  return categories.map((category) => ({
+    params: { category: category.slug },
+    props: { category }
+  }));
+}
+
+const { category } = Astro.props;
+const posts = sortPosts(await getCollection('blog')).filter((post) => post.data.category === category.slug);
+---
+
+<BaseLayout title={`${category.name}归档`} description={category.description}>
+  <PageHeader eyebrow="Category" title={`${category.name}归档`} description={category.description} />
+  <section class="page-shell">
+    <div class="grid gap-6 md:grid-cols-2">
+      {posts.map((post) => <ArticleCard post={post} />)}
+    </div>
+    {
+      posts.length === 0 && (
+        <div class="soft-card p-8 text-center text-slate-600 dark:text-slate-300">
+          这个分类还在等第一篇文章。
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

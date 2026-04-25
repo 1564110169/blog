@@ -1,0 +1,51 @@
+<div class="cursor-effects" aria-hidden="true">
+  <span class="cursor-glow"></span>
+</div>
+
+<script is:inline>
+  (() => {
+    const canUseAura =
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!canUseAura) return;
+
+    const root = document.documentElement;
+    const glow = document.querySelector('.cursor-glow');
+
+    if (!glow) return;
+
+    const isInteractive = (target) =>
+      target instanceof Element &&
+      Boolean(target.closest('a, button, summary, input, textarea, select, [data-cursor="link"]'));
+
+    let targetX = window.innerWidth / 2;
+    let targetY = window.innerHeight / 2;
+    let glowX = targetX;
+    let glowY = targetY;
+
+    const render = () => {
+      glowX += (targetX - glowX) * 0.16;
+      glowY += (targetY - glowY) * 0.16;
+      glow.style.transform = `translate3d(${glowX}px, ${glowY}px, 0)`;
+      window.requestAnimationFrame(render);
+    };
+
+    window.addEventListener(
+      'pointermove',
+      (event) => {
+        targetX = event.clientX;
+        targetY = event.clientY;
+        root.classList.add('cursor-aura-ready');
+        root.classList.toggle('cursor-aura-hover', isInteractive(event.target));
+        root.classList.remove('cursor-aura-hidden');
+      },
+      { passive: true }
+    );
+
+    document.addEventListener('mouseleave', () => root.classList.add('cursor-aura-hidden'));
+    document.addEventListener('mouseenter', () => root.classList.remove('cursor-aura-hidden'));
+
+    render();
+  })();
+</script>

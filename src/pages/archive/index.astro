@@ -1,0 +1,40 @@
+---
+import { getCollection } from 'astro:content';
+
+import ArticleCard from '@/components/ArticleCard.astro';
+import PageHeader from '@/components/PageHeader.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { link } from '@/lib/paths';
+import { sortPosts } from '@/lib/posts';
+import { categories } from '@/lib/site';
+
+const posts = sortPosts(await getCollection('blog'));
+const grouped = posts.reduce<Record<string, typeof posts>>((acc, post) => {
+  const year = String(post.data.date.getFullYear());
+  acc[year] = acc[year] ?? [];
+  acc[year].push(post);
+  return acc;
+}, {});
+const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
+---
+
+<BaseLayout title="文章归档" description="所有文章按时间排列，也可以按分类继续浏览。">
+  <PageHeader eyebrow="Archive" title="文章归档" description="把写过的东西按时间收好，像给电子抽屉贴上标签。" />
+  <section class="page-shell">
+    <div class="mb-8 flex flex-wrap gap-2">
+      {categories.map((category) => <a class="tag-chip" href={link(`/archive/${category.slug}`)}>{category.name}</a>)}
+    </div>
+    <div class="space-y-10">
+      {
+        years.map((year) => (
+          <section>
+            <h2 class="section-title">{year}</h2>
+            <div class="mt-5 grid gap-6">
+              {grouped[year].map((post) => <ArticleCard post={post} compact />)}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

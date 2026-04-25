@@ -1,0 +1,28 @@
+---
+import { getCollection } from 'astro:content';
+
+import ArticleCard from '@/components/ArticleCard.astro';
+import PageHeader from '@/components/PageHeader.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getAllTags, slugify, sortPosts } from '@/lib/posts';
+
+export async function getStaticPaths() {
+  const allPosts = sortPosts(await getCollection('blog'));
+  const tags = getAllTags(allPosts);
+  return tags.map((tag) => ({
+    params: { tag: slugify(tag) },
+    props: { tag }
+  }));
+}
+
+const { tag } = Astro.props;
+const allPosts = sortPosts(await getCollection('blog'));
+const posts = allPosts.filter((post) => post.data.tags.includes(tag));
+---
+
+<BaseLayout title={`#${tag}`} description={`标签 ${tag} 下的文章。`}>
+  <PageHeader eyebrow="Tag" title={`#${tag}`} description={`共 ${posts.length} 篇文章与这个标签有关。`} />
+  <section class="page-shell grid gap-6 md:grid-cols-2">
+    {posts.map((post) => <ArticleCard post={post} />)}
+  </section>
+</BaseLayout>

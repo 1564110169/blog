@@ -1,0 +1,29 @@
+---
+import { getCollection } from 'astro:content';
+
+import PageHeader from '@/components/PageHeader.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { link } from '@/lib/paths';
+import { getCategoryCounts, sortPosts } from '@/lib/posts';
+import { categories } from '@/lib/site';
+
+const posts = sortPosts(await getCollection('blog'));
+const counts = getCategoryCounts(posts);
+---
+
+<BaseLayout title="分类" description="按主题浏览所有文章。">
+  <PageHeader eyebrow="Categories" title="分类" description="给文章找一个温柔的小格子。" />
+  <section class="page-shell grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    {
+      categories.map((category) => (
+        <a class="soft-card p-6" href={link(`/categories/${category.slug}`)}>
+          <span class={`inline-block rounded-full bg-gradient-to-r ${category.accent} px-3 py-1 text-xs font-bold text-white`}>
+            {category.name}
+          </span>
+          <p class="mt-5 text-3xl font-black text-ink-900 dark:text-white">{counts[category.slug] ?? 0}</p>
+          <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{category.description}</p>
+        </a>
+      ))
+    }
+  </section>
+</BaseLayout>

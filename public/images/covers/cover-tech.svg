@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Tech cover placeholder">
+  <rect width="960" height="540" fill="#f8f5ff"/>
+  <path d="M600 64c103 32 223 28 360-13v175c-112 36-218 38-318 6-61-20-119-21-174-5V102c42-29 86-42 132-38z" fill="#dacfff"/>
+  <path d="M618 322c106-42 220-38 342 12v206H618z" fill="#b7e4ff" opacity=".58"/>
+  <rect x="90" y="98" width="520" height="344" rx="28" fill="#fff" opacity=".78"/>
+  <path d="M150 190h250M150 250h360M150 310h300" stroke="#7c52e6" stroke-linecap="round" stroke-width="22" opacity=".68"/>
+  <text x="94" y="492" fill="#181725" font-family="Arial, sans-serif" font-size="42" font-weight="800">Tech Log</text>
+</svg>
