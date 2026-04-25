@@ -1280,7 +1280,7 @@ body {
     background-clip: padding-box;
     border-color: rgba(195, 172, 255, 0.72);
     border-radius: 999px;
-    box-shadow: 0 12px 24px rgba(124, 82, 230, 0.16);
+    box-shadow: none;
     color: #7c52e6;
     overflow: hidden;
     transition:
@@ -1313,6 +1313,8 @@ body {
 
   .music-card {
     -webkit-tap-highlight-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     background: transparent;
     border: 0;
     border-radius: 0;
@@ -1338,6 +1340,7 @@ body {
     transform: none;
   }
 
+  .music-card::before,
   .music-card::after {
     display: none;
   }
@@ -1354,7 +1357,7 @@ body {
     background: #fff;
     background-clip: padding-box;
     border-color: rgba(195, 172, 255, 0.72);
-    box-shadow: 0 12px 24px rgba(124, 82, 230, 0.16);
+    box-shadow: none;
     height: 44px;
     overflow: hidden;
     transition:
@@ -1394,7 +1397,7 @@ body {
     background-clip: padding-box;
     border: 1px solid rgba(195, 172, 255, 0.72);
     border-radius: 999px;
-    box-shadow: 0 12px 24px rgba(124, 82, 230, 0.16);
+    box-shadow: none;
     display: flex;
     flex: 0 0 auto;
     height: 44px;
@@ -1427,15 +1430,11 @@ body {
 
   .music-play-button:focus-visible,
   .music-card-body:focus-visible {
-    box-shadow:
-      0 0 0 3px rgba(124, 82, 230, 0.22),
-      0 12px 24px rgba(124, 82, 230, 0.16);
+    box-shadow: 0 0 0 3px rgba(124, 82, 230, 0.22);
   }
 
   .dashboard-theme-toggle [data-theme-toggle]:focus-visible {
-    box-shadow:
-      0 0 0 3px rgba(124, 82, 230, 0.22),
-      0 12px 24px rgba(124, 82, 230, 0.16);
+    box-shadow: 0 0 0 3px rgba(124, 82, 230, 0.22);
   }
 
   .music-play-button:active,
@@ -1466,17 +1465,13 @@ body {
   :root.dark .music-play-button {
     background: #252038;
     border-color: rgba(214, 191, 255, 0.26);
-    box-shadow:
-      0 12px 28px rgba(0, 0, 0, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: none;
   }
 
   :root.dark .dashboard-theme-toggle [data-theme-toggle] {
     background: #252038;
     border-color: rgba(214, 191, 255, 0.26);
-    box-shadow:
-      0 12px 28px rgba(0, 0, 0, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: none;
     color: #d9c8ff;
   }
 
@@ -1504,24 +1499,16 @@ body {
   :root.dark .music-card-body {
     background: #252038;
     border-color: rgba(214, 191, 255, 0.26);
-    box-shadow:
-      0 12px 28px rgba(0, 0, 0, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: none;
   }
 
   :root.dark .music-play-button:focus-visible,
   :root.dark .music-card-body:focus-visible {
-    box-shadow:
-      0 0 0 3px rgba(217, 200, 255, 0.24),
-      0 12px 28px rgba(0, 0, 0, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(217, 200, 255, 0.24);
   }
 
   :root.dark .dashboard-theme-toggle [data-theme-toggle]:focus-visible {
-    box-shadow:
-      0 0 0 3px rgba(217, 200, 255, 0.24),
-      0 12px 28px rgba(0, 0, 0, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(217, 200, 255, 0.24);
   }
 
   :root.dark .music-card-body .music-bars i {
@@ -1548,21 +1535,19 @@ body {
     .music-play-button:hover,
     .music-card-body:hover {
       background: #fff;
-      box-shadow: 0 12px 24px rgba(124, 82, 230, 0.16);
+      box-shadow: none;
     }
 
     .dashboard-theme-toggle [data-theme-toggle]:hover {
       background: #fff;
-      box-shadow: 0 12px 24px rgba(124, 82, 230, 0.16);
+      box-shadow: none;
     }
 
     :root.dark .music-play-button:hover,
     :root.dark .music-card-body:hover,
     :root.dark .dashboard-theme-toggle [data-theme-toggle]:hover {
       background: #252038;
-      box-shadow:
-        0 12px 28px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      box-shadow: none;
     }
   }
 
@@ -1584,7 +1569,7 @@ body {
     .dashboard-theme-toggle [data-theme-toggle]:focus {
       background: #fff;
       border-color: rgba(195, 172, 255, 0.72);
-      box-shadow: 0 12px 24px rgba(124, 82, 230, 0.16);
+      box-shadow: none;
       color: #7c52e6;
       outline: 0;
     }
@@ -1597,9 +1582,7 @@ body {
     :root.dark .dashboard-theme-toggle [data-theme-toggle]:focus {
       background: #252038;
       border-color: rgba(214, 191, 255, 0.26);
-      box-shadow:
-        0 12px 28px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      box-shadow: none;
       color: #d9c8ff;
       outline: 0;
     }
