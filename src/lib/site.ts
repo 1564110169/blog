@@ -1,70 +1,27 @@
-export const SITE = {
-  title: 'yuulog',
-  shortTitle: 'yuu',
-  description: '在电子世界里写点自己的碎碎念',
-  author: '悠',
-  locale: 'zh-CN',
-  startDate: '2026-04-24'
+import { siteConfig } from '@/site.config';
+
+export type NavItem = {
+  readonly label: string;
+  readonly href: string;
+  readonly children?: readonly NavItem[];
 };
 
-export const categories = [
-  {
-    slug: 'tech',
-    name: '技术',
-    description: 'Astro、前端、工具链和工程笔记。',
-    accent: 'from-yume-400 to-sakura-300'
-  },
-  {
-    slug: 'article',
-    name: '文章',
-    description: '稍微认真一点的长文与观察。',
-    accent: 'from-sky-300 to-yume-300'
-  },
-  {
-    slug: 'thoughts',
-    name: '随想',
-    description: '生活里的短句、碎片和温柔噪声。',
-    accent: 'from-sakura-300 to-rose-300'
-  },
-  {
-    slug: 'reviews',
-    name: '影评',
-    description: '电影、动画与故事里的余温。',
-    accent: 'from-amber-200 to-sakura-300'
-  }
-] as const;
+export const SITE = siteConfig.site;
+export const PROFILE = siteConfig.profile;
+export const MUSIC = {
+  ...siteConfig.music,
+  embedSrc: `https://music.163.com/outchain/player?type=0&id=${siteConfig.music.neteasePlaylistId}&auto=${
+    siteConfig.music.autoplay ? 1 : 0
+  }&height=${siteConfig.music.playerHeight}`
+};
+export const FRIENDS = siteConfig.friends;
+export const commonTags = siteConfig.commonTags;
+export const sidebarNavItems: readonly NavItem[] = siteConfig.navigation.sidebar;
+export const categories = siteConfig.categories;
 
 export type CategorySlug = (typeof categories)[number]['slug'];
 
-export const navGroups = [
-  {
-    label: '首页',
-    href: '/'
-  },
-  {
-    label: '归档',
-    href: '/archive',
-    children: [
-      { label: '技术', href: '/archive/tech' },
-      { label: '文章', href: '/archive/article' },
-      { label: '随想', href: '/archive/thoughts' },
-      { label: '影评', href: '/archive/reviews' }
-    ]
-  },
-  {
-    label: '清单',
-    href: '/books',
-    children: [
-      { label: '书单', href: '/books' },
-      { label: '番组', href: '/anime' },
-      { label: '歌单', href: '/playlist' }
-    ]
-  },
-  {
-    label: '关于',
-    href: '/about'
-  }
-];
+export const navGroups: readonly NavItem[] = siteConfig.navigation.top;
 
 export function getCategory(slug: string) {
   return categories.find((category) => category.slug === slug);

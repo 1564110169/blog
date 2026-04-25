@@ -1,6 +1,6 @@
 ---
 import { asset, link } from '@/lib/paths';
-import { SITE } from '@/lib/site';
+import { PROFILE, SITE } from '@/lib/site';
 ---
 
 <section
@@ -10,7 +10,7 @@ import { SITE } from '@/lib/site';
   <div class="anime-hero-glow"></div>
   <div class="anime-hero-content">
     <p class="anime-hero-kicker">Yuu no Digital Room</p>
-    <h1>Hi，我是悠</h1>
+    <h1>{PROFILE.heroTitle}</h1>
     <p>{SITE.description}</p>
     <div class="anime-hero-actions">
       <a href="#latest">开始阅读</a>

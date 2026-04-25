@@ -1,17 +1,12 @@
 ---
 import { asset, link } from '@/lib/paths';
+import { MUSIC, PROFILE, sidebarNavItems } from '@/lib/site';
 import ThemeToggle from './ThemeToggle.astro';
 
-const navItems = [
-  { label: '首页', href: '/' },
-  { label: '归档', href: '/archive' },
-  { label: '分类', href: '/categories' },
-  { label: '标签', href: '/tags' },
-  { label: '关于', href: '/about' }
-];
-
-const playlistSrc = 'https://music.163.com/outchain/player?type=0&id=399279457&auto=1&height=430';
-const currentTrackTitle = '悠の歌单';
+const navItems = sidebarNavItems;
+const playlistSrc = MUSIC.embedSrc;
+const currentTrackTitle = MUSIC.title;
+const iframeHeight = String(MUSIC.playerHeight + 20);
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
 
 function isActive(href: string) {
@@ -22,10 +17,10 @@ function isActive(href: string) {
 ---
 
 <aside class="left-sidebar">
-  <a class="sidebar-profile" href={link('/about')} aria-label="关于悠">
-    <img class="sidebar-avatar" src={asset('/images/avatar-placeholder.png')} alt="悠的头像" />
-    <span class="sidebar-name">悠</span>
-    <span class="sidebar-sign">自由职业 / 游戏 / 动漫 / 编程</span>
+  <a class="sidebar-profile" href={link('/about')} aria-label={`关于${PROFILE.name}`}>
+    <img class="sidebar-avatar" src={asset(PROFILE.avatar)} alt={PROFILE.avatarAlt} />
+    <span class="sidebar-name">{PROFILE.name}</span>
+    <span class="sidebar-sign">{PROFILE.sign}</span>
   </a>
 
   <nav class="sidebar-nav" aria-label="主导航">
@@ -44,17 +39,14 @@ function isActive(href: string) {
         title="网易云音乐歌单播放器"
         src={playlistSrc}
         width="100%"
-        height="450"
-        frameborder="no"
-        border="0"
-        marginwidth="0"
-        marginheight="0"
+        height={iframeHeight}
+        style="border: 0;"
         allow="autoplay; encrypted-media"
       ></iframe>
     </div>
 
     <div class="music-card">
-      <button class="music-play-button" type="button" aria-label="暂停悠の歌单" aria-pressed="true" data-music-play-toggle>
+      <button class="music-play-button" type="button" aria-label={`暂停${currentTrackTitle}`} aria-pressed="true" data-music-play-toggle>
         <span class="music-play-icon" aria-hidden="true">
           <span class="music-icon music-icon-play"></span>
           <span class="music-icon music-icon-pause"></span>
@@ -76,10 +68,10 @@ function isActive(href: string) {
 </div>
 
 <div class="mobile-sidebar-card">
-  <img class="sidebar-avatar" src={asset('/images/avatar-placeholder.png')} alt="悠的头像" />
+  <img class="sidebar-avatar" src={asset(PROFILE.avatar)} alt={PROFILE.avatarAlt} />
   <div>
-    <p class="sidebar-name">悠</p>
-    <p class="sidebar-sign">自由职业 / 游戏 / 动漫 / 编程</p>
+    <p class="sidebar-name">{PROFILE.name}</p>
+    <p class="sidebar-sign">{PROFILE.sign}</p>
   </div>
 </div>
 
@@ -117,7 +109,7 @@ function isActive(href: string) {
       function setPlaying(isPlaying) {
         player.classList.toggle('is-playing', isPlaying);
         playToggle.setAttribute('aria-pressed', String(isPlaying));
-        playToggle.setAttribute('aria-label', isPlaying ? '暂停悠の歌单' : '播放悠の歌单');
+        playToggle.setAttribute('aria-label', isPlaying ? `暂停${trackTitle}` : `播放${trackTitle}`);
         if (status) status.textContent = isPlaying ? 'Now Playing' : 'Paused';
         if (title) title.textContent = trackTitle;
 

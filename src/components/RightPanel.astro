@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 
 import { asset, link } from '@/lib/paths';
 import { getAllTags, getCategoryCounts, getTagCounts, slugify, sortPosts } from '@/lib/posts';
-import { categories, SITE } from '@/lib/site';
+import { categories, PROFILE, SITE } from '@/lib/site';
 
 const posts = sortPosts(await getCollection('blog'));
 const categoryCounts = getCategoryCounts(posts);
@@ -15,13 +15,13 @@ const runningDays = Math.max(1, Math.ceil((Date.now() - new Date(SITE.startDate)
 <aside class="right-panel">
   <section class="panel-card about-card">
     <div class="about-head">
-      <img src={asset('/images/avatar-placeholder.png')} alt="悠的头像" />
+      <img src={asset(PROFILE.avatar)} alt={PROFILE.avatarAlt} />
       <div>
-        <p>关于我</p>
-        <h2>悠</h2>
+        <p>{PROFILE.aboutCardLabel}</p>
+        <h2>{PROFILE.name}</h2>
       </div>
     </div>
-    <p class="about-text">喜欢把游戏、动漫、代码和夜里的灵感收进博客。这里会放技术笔记，也会放没有结论的碎碎念。</p>
+    <p class="about-text">{PROFILE.aboutCardText}</p>
   </section>
 
   <section class="panel-card">
