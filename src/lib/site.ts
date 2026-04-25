@@ -1,6 +1,6 @@
 export const SITE = {
-  title: '悠的电子手账',
-  shortTitle: '悠',
+  title: 'yuulog',
+  shortTitle: 'yuu',
   description: '在电子世界里写点自己的碎碎念',
   author: '悠',
   locale: 'zh-CN',
