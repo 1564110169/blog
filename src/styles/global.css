@@ -1312,17 +1312,25 @@ body {
   }
 
   .music-card {
+    -webkit-tap-highlight-color: transparent;
     background: transparent;
-    border-color: transparent;
+    border: 0;
     border-radius: 0;
     box-shadow: none;
     flex: 0 0 auto;
     gap: 0.45rem;
     inline-size: max-content;
     min-height: 0;
+    outline: 0;
     overflow: visible;
     padding: 0;
     width: max-content;
+  }
+
+  .music-card:focus-within {
+    background: transparent;
+    box-shadow: none;
+    outline: 0;
   }
 
   .music-card:hover {
@@ -1336,7 +1344,7 @@ body {
 
   :root.dark .music-card {
     background: transparent;
-    border-color: transparent;
+    border: 0;
     box-shadow: none;
   }
 
@@ -1555,6 +1563,45 @@ body {
       box-shadow:
         0 12px 28px rgba(0, 0, 0, 0.28),
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .music-play-button:hover,
+    .music-play-button:focus,
+    .music-card-body:hover,
+    .music-card-body:focus,
+    .dashboard-theme-toggle [data-theme-toggle]:hover,
+    .dashboard-theme-toggle [data-theme-toggle]:focus {
+      transform: none;
+    }
+
+    .music-play-button:hover,
+    .music-play-button:focus,
+    .music-card-body:hover,
+    .music-card-body:focus,
+    .dashboard-theme-toggle [data-theme-toggle]:hover,
+    .dashboard-theme-toggle [data-theme-toggle]:focus {
+      background: #fff;
+      border-color: rgba(195, 172, 255, 0.72);
+      box-shadow: 0 12px 24px rgba(124, 82, 230, 0.16);
+      color: #7c52e6;
+      outline: 0;
+    }
+
+    :root.dark .music-play-button:hover,
+    :root.dark .music-play-button:focus,
+    :root.dark .music-card-body:hover,
+    :root.dark .music-card-body:focus,
+    :root.dark .dashboard-theme-toggle [data-theme-toggle]:hover,
+    :root.dark .dashboard-theme-toggle [data-theme-toggle]:focus {
+      background: #252038;
+      border-color: rgba(214, 191, 255, 0.26);
+      box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      color: #d9c8ff;
+      outline: 0;
     }
   }
 
