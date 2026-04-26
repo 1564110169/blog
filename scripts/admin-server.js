@@ -721,10 +721,12 @@ function adminHtml() {
         drafts: () => renderPosts('草稿箱', true),
         trash: renderTrash,
         ideas: renderIdeas,
-        settings: renderSettings
+        settings: renderSettings,
+        editor: renderEditor
       };
 
-      app.innerHTML = (state.message ? '<div class="card card-pad" style="margin-bottom:14px">' + escapeHtml(state.message) + '</div>' : '') + views[state.view]();
+      const renderView = views[state.view] || renderDashboard;
+      app.innerHTML = (state.message ? '<div class="card card-pad" style="margin-bottom:14px">' + escapeHtml(state.message) + '</div>' : '') + renderView();
       bindViewEvents();
     }
 
@@ -870,8 +872,10 @@ function adminHtml() {
       if (state.view === 'editor') {
         const body = document.getElementById('edit-body');
         const preview = document.getElementById('preview');
+        if (!body || !preview) return;
+
         const updatePreview = () => preview.innerHTML = markdownToHtml(body.value);
-        body?.addEventListener('input', updatePreview);
+        body.addEventListener('input', updatePreview);
         updatePreview();
         document.getElementById('savePost')?.addEventListener('click', saveEditingPost);
       }
@@ -894,30 +898,42 @@ function adminHtml() {
     }
 
     async function editPost(id) {
-      state.view = 'editor';
-      state.editing = null;
-      render();
-      const data = await api('/posts/' + id);
-      state.editing = data.post;
-      render();
+      try {
+        state.view = 'editor';
+        state.editing = null;
+        state.message = '';
+        render();
+        const data = await api('/posts/' + encodeURIComponent(id));
+        state.editing = data.post;
+        render();
+      } catch (error) {
+        state.view = 'posts';
+        state.editing = null;
+        showMessage('打开编辑器失败：' + (error.message || '未知错误'));
+        await loadPosts(state.view === 'drafts');
+      }
     }
 
     async function saveEditingPost() {
-      const post = state.editing;
-      const payload = {
-        title: valueOf('edit-title'),
-        category: valueOf('edit-category') || '随笔',
-        tags: valueOf('edit-tags'),
-        description: valueOf('edit-description'),
-        cover: valueOf('edit-cover'),
-        draft: document.getElementById('edit-draft').checked,
-        body: valueOf('edit-body')
-      };
-      const data = await api('/posts/' + post.id, { method: 'PUT', body: JSON.stringify(payload) });
-      state.editing = data.post;
-      showMessage('已保存：' + data.post.title);
-      state.view = 'editor';
-      render();
+      try {
+        const post = state.editing;
+        const payload = {
+          title: valueOf('edit-title'),
+          category: valueOf('edit-category') || '随笔',
+          tags: valueOf('edit-tags'),
+          description: valueOf('edit-description'),
+          cover: valueOf('edit-cover'),
+          draft: document.getElementById('edit-draft').checked,
+          body: valueOf('edit-body')
+        };
+        const data = await api('/posts/' + encodeURIComponent(post.id), { method: 'PUT', body: JSON.stringify(payload) });
+        state.editing = data.post;
+        showMessage('已保存：' + data.post.title);
+        state.view = 'editor';
+        render();
+      } catch (error) {
+        showMessage('保存失败：' + (error.message || '未知错误'));
+      }
     }
 
     async function publishPost(id) {

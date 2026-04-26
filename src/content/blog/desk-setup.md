@@ -2,6 +2,7 @@
 title: 书桌整理记录
 description: 一篇普通文章分类示例，记录工作流和生活小物。
 date: 2026-04-05
+updated: "2026-04-26"
 category: article
 tags:
   - 生活
