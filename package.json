@@ -7,7 +7,21 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "admin": "node scripts/admin-server.js",
+    "blog": "node scripts/blog-manager.js",
+    "new": "node scripts/blog-manager.js new",
+    "posts": "node scripts/blog-manager.js posts",
+    "search": "node scripts/blog-manager.js search",
+    "drafts": "node scripts/blog-manager.js drafts",
+    "publish": "node scripts/blog-manager.js publish",
+    "draft": "node scripts/blog-manager.js draft",
+    "delete": "node scripts/blog-manager.js delete",
+    "restore": "node scripts/blog-manager.js restore",
+    "rename": "node scripts/blog-manager.js rename",
+    "touch": "node scripts/blog-manager.js touch",
+    "stats": "node scripts/blog-manager.js stats",
+    "idea": "node scripts/blog-manager.js idea"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.0.0",

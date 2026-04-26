@@ -402,6 +402,12 @@ export const siteConfig = {
       name: '影评',
       description: '电影、动画与故事里的余温。',
       accent: 'from-amber-200 to-sakura-300'
+    },
+    {
+      slug: '随笔',
+      name: '随笔',
+      description: '日常观察、个人表达和没有那么急着下结论的文字。',
+      accent: 'from-emerald-300 to-sky-300'
     }
   ],
 

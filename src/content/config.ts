@@ -1,16 +1,21 @@
 import { defineCollection, z } from 'astro:content';
-import { ARTICLE_DEFAULTS, categorySlugs } from '@/lib/site';
+import { ARTICLE_DEFAULTS } from '@/lib/site';
+
+const dateField = z.coerce.date();
 
 const blog = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    description: z.string(),
-    date: z.coerce.date(),
-    updated: z.coerce.date().optional(),
-    category: z.enum(categorySlugs),
+    date: dateField,
+    updated: dateField.optional(),
+    category: z.string().default('随笔'),
     tags: z.array(z.string()).default([...ARTICLE_DEFAULTS.defaultTags]),
-    cover: z.string().optional(),
+    description: z.string().default(''),
+    cover: z
+      .string()
+      .optional()
+      .transform((value) => (value?.trim() ? value : undefined)),
     draft: z.boolean().default(ARTICLE_DEFAULTS.draft)
   })
 });
