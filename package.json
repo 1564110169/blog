@@ -8,6 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "start:all": "node scripts/start-all.js",
     "admin": "node scripts/admin-server.js",
     "blog": "node scripts/blog-manager.js",
     "new": "node scripts/blog-manager.js new",

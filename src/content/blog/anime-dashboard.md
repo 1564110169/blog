@@ -1,13 +1,12 @@
 ---
-title: 给个人博客做一块动漫仪表盘
-description: 记录把头像、导航、音乐卡片和文章流组合成三栏首页的过程。
+title: "给个人博客做一块动漫仪表盘"
+description: "记录把头像、导航、音乐卡片和文章流组合成三栏首页的过程。"
 date: 2026-04-23
-category: tech
-tags:
-  - Astro
-  - UI
-  - 二次元
-cover: /images/covers/cover-tech.svg
+updated: "2026-04-26"
+category: "test"
+tags: []
+cover: "/images/covers/cover-tech.svg"
+draft: false
 ---
 
 我想要的首页不是一个冷冰冰的列表，而是一块可以每天打开的电子小房间。

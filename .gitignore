@@ -1,7 +1,8 @@
-node_modules
-dist
-.astro
-.npm-cache
+node_modules/
+dist/
+.astro/
+logs/
+.npm-cache/
 
 *.log
 

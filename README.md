@@ -17,8 +17,8 @@
 - 深色模式、移动端适配、毛玻璃卡片、柔和动效
 - 网易云歌单播放器，当前歌单 ID：`399279457`
 - 本地命令行文章管理系统：`npm run blog`
-- 本地网页后台 CMS：`http://localhost:4322/admin`
-- Windows 双击启动后台：`start-admin.vbs` 或 `start-admin.bat`
+- 本地网页后台 CMS：`http://localhost:4323/admin`
+- Windows 双击启动后台：`tools/start-admin.cmd`
 
 ## 快速开始
 
@@ -62,13 +62,12 @@ npm run preview
 
 最推荐的日常写作方式是双击启动后台：
 
-- 双击 `start-admin.vbs`：隐藏黑色命令行窗口，自动打开浏览器
-- 双击 `start-admin.bat`：显示启动日志，适合排查端口占用
+- 双击 `tools/start-admin.cmd`：显示启动日志，适合排查端口占用
 
 后台地址：
 
 ```txt
-http://localhost:4322/admin
+http://localhost:4323/admin
 ```
 
 也可以手动启动：
@@ -90,7 +89,7 @@ npm run admin
 后台服务只监听本机：
 
 ```txt
-127.0.0.1:4322
+127.0.0.1:4323
 ```
 
 它不会监听 `0.0.0.0`，不会暴露到局域网，也不会被 Astro 构建进 `dist`。
@@ -321,7 +320,7 @@ GitHub Pages 只能托管静态文件，不能运行本地 Node 服务。
 
 本项目的后台 CMS 需要：
 
-- 监听 `localhost:4322`
+- 监听 `localhost:4323`
 - 读取和写入本机 Markdown 文件
 - 移动文章到 `.trash/posts/`
 - 恢复或永久删除本地文件
@@ -355,8 +354,10 @@ GitHub Pages 只能托管静态文件，不能运行本地 Node 服务。
 │   ├── lib/
 │   ├── pages/
 │   └── styles/
-├── start-admin.bat
-├── start-admin.vbs
+├── tools/
+│   ├── start-all.cmd
+│   ├── start-admin.cmd
+│   └── start-frontend.cmd
 ├── astro.config.mjs
 ├── package.json
 ├── site.ts
@@ -366,8 +367,8 @@ GitHub Pages 只能托管静态文件，不能运行本地 Node 服务。
 
 ## 推荐日常流程
 
-1. 双击 `start-admin.vbs`
-2. 浏览器打开 `http://localhost:4322/admin`
+1. 双击 `tools/start-admin.cmd`
+2. 浏览器打开 `http://localhost:4323/admin`
 3. 在「新建文章」创建草稿或正式文章
 4. 在「文章列表」编辑正文并保存
 5. 使用 `npm run dev` 预览前台效果

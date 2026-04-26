@@ -1,15 +1,15 @@
 @echo off
 setlocal
 
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 echo 正在检查端口...
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
-"$client=New-Object Net.Sockets.TcpClient; try { $client.Connect('127.0.0.1',4322); if ($client.Connected) { $client.Close(); exit 10 } } catch { exit 0 }"
+"$client=New-Object Net.Sockets.TcpClient; try { $client.Connect('127.0.0.1',4323); if ($client.Connected) { $client.Close(); exit 10 } } catch { exit 0 }"
 
 if %errorlevel%==10 (
-  echo [提示] 端口 4322 已被占用，后台可能已启动。
+  echo [提示] 端口 4323 已被占用，后台可能已启动。
   pause
   exit /b 1
 )
@@ -17,7 +17,7 @@ if %errorlevel%==10 (
 echo 正在启动后台...
 
 start "" powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command ^
-"Start-Sleep -Milliseconds 800; Start-Process 'http://localhost:4322/admin'"
+"Start-Sleep -Milliseconds 800; Start-Process 'http://localhost:4323/admin'"
 
 call npm.cmd run admin
 

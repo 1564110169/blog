@@ -9,6 +9,10 @@ const base = process.env.BASE ?? '/blog';
 export default defineConfig({
   site,
   base,
+  server: {
+    port: 4321,
+    strictPort: true
+  },
   trailingSlash: 'never',
   integrations: [
     tailwind({

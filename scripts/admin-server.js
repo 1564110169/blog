@@ -7,6 +7,7 @@ import { URL } from 'node:url';
 
 import {
   DEFAULT_CATEGORY,
+  ROOT,
   TRASH_POST_DIR,
   createPost,
   deletePostToTrash,
@@ -26,9 +27,13 @@ import {
 import { splitFrontmatter, updateFrontmatterContent } from './lib/frontmatter.js';
 
 const HOST = '127.0.0.1';
-const PORT = 4322;
+const PORT = readPort(process.env.ADMIN_PORT, 4323);
 const ADMIN_URL = `http://localhost:${PORT}/admin`;
 const MAX_BODY_SIZE = 5 * 1024 * 1024;
+const PUBLIC_COVERS_DIR = path.join(ROOT, 'public', 'images', 'covers');
+const COVER_EXTENSIONS = new Set(['.avif', '.gif', '.jpg', '.jpeg', '.png', '.svg', '.webp']);
+const DEFAULT_CATEGORIES = ['tech', 'article', 'thoughts', 'reviews', '随笔'];
+const DEFAULT_TAGS = ['Astro', 'TypeScript', 'Tailwind CSS', 'UI', '动漫', '游戏', '影评', '随想', '日常'];
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -41,6 +46,11 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/admin' || url.pathname === '/admin/')) {
       sendHtml(res, adminHtml());
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname.startsWith('/admin-assets/covers/')) {
+      await serveCoverAsset(res, url);
       return;
     }
 
@@ -57,8 +67,8 @@ const server = http.createServer(async (req, res) => {
 
 server.on('error', (error) => {
   if (error.code === 'EADDRINUSE') {
-    console.error('端口 4322 已被占用，后台没有启动。');
-    console.error('请确认是否已经打开了后台，或关闭占用 4322 端口的程序后再试。');
+    console.error(`端口 ${PORT} 已被占用，后台没有启动。`);
+    console.error(`请确认是否已经打开了后台，或关闭占用 ${PORT} 端口的程序后再试。`);
     process.exit(1);
   }
 
@@ -75,13 +85,22 @@ async function handleApi(req, res, url) {
   const parts = url.pathname.split('/').filter(Boolean).slice(1);
   const [resource, id, action] = parts;
 
+  if (req.method === 'GET' && resource === 'meta') {
+    sendJson(res, 200, await getEditorMeta());
+    return;
+  }
+
   if (req.method === 'GET' && resource === 'settings') {
     const postDir = await findPostDir();
+    const meta = await getEditorMeta();
     sendJson(res, 200, {
       postDir: toRelative(postDir),
       trashDir: toRelative(TRASH_POST_DIR),
       adminUrl: ADMIN_URL,
       localOnly: true,
+      categories: meta.categories,
+      tags: meta.tags,
+      covers: meta.covers,
       notes: [
         '后台只绑定 localhost，适合本机写作管理。',
         '文章文件只会在当前文章目录中创建、编辑、重命名或移入回收站。',
@@ -304,6 +323,87 @@ async function serializeFullPost(post) {
   };
 }
 
+async function getEditorMeta() {
+  const posts = await readPosts();
+  const categories = uniqueNormalized([...DEFAULT_CATEGORIES, ...posts.map((post) => post.category).filter(Boolean)]).sort((a, b) =>
+    a.localeCompare(b, 'zh-CN')
+  );
+  const tags = Array.from(new Set([...DEFAULT_TAGS, ...posts.flatMap((post) => post.tags || [])])).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+  const covers = await readCoverOptions();
+
+  return { categories, tags, covers };
+}
+
+function uniqueNormalized(values) {
+  const seen = new Set();
+  const result = [];
+
+  for (const value of values) {
+    const item = String(value || '').trim().replace(/\s+/g, ' ');
+    const key = item.toLocaleLowerCase('zh-CN');
+    if (!item || seen.has(key)) continue;
+    seen.add(key);
+    result.push(item);
+  }
+
+  return result;
+}
+
+async function readCoverOptions() {
+  const files = await fs.readdir(PUBLIC_COVERS_DIR, { withFileTypes: true }).catch(() => []);
+
+  return files
+    .filter((file) => file.isFile() && COVER_EXTENSIONS.has(path.extname(file.name).toLowerCase()))
+    .map((file) => ({
+      name: file.name,
+      path: `/images/covers/${file.name}`,
+      previewUrl: `/admin-assets/covers/${encodeURIComponent(file.name)}`
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+}
+
+async function serveCoverAsset(res, url) {
+  const fileName = decodeURIComponent(url.pathname.replace('/admin-assets/covers/', ''));
+  if (!fileName || fileName.includes('/') || fileName.includes('\\')) {
+    sendText(res, 400, 'Invalid cover asset');
+    return;
+  }
+
+  const filePath = path.join(PUBLIC_COVERS_DIR, fileName);
+  assertInside(PUBLIC_COVERS_DIR, filePath);
+
+  if (!COVER_EXTENSIONS.has(path.extname(filePath).toLowerCase())) {
+    sendText(res, 403, 'Unsupported cover type');
+    return;
+  }
+
+  try {
+    const file = await fs.readFile(filePath);
+    res.writeHead(200, {
+      'Content-Type': getMimeType(filePath),
+      'Cache-Control': 'no-store'
+    });
+    res.end(file);
+  } catch {
+    sendText(res, 404, 'Cover not found');
+  }
+}
+
+function getMimeType(filePath) {
+  const extension = path.extname(filePath).toLowerCase();
+  const types = {
+    '.avif': 'image/avif',
+    '.gif': 'image/gif',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.svg': 'image/svg+xml',
+    '.webp': 'image/webp'
+  };
+
+  return types[extension] || 'application/octet-stream';
+}
+
 function serializePosts(posts) {
   return posts.map(serializePost);
 }
@@ -419,6 +519,12 @@ function encodeId(value) {
 
 function randomItem(items) {
   return items[Math.floor(Math.random() * items.length)] || '今天想写的一件小事';
+}
+
+function readPort(value, fallback) {
+  const port = Number.parseInt(value || '', 10);
+  if (Number.isInteger(port) && port > 0 && port < 65536) return port;
+  return fallback;
 }
 
 function assertInsideTrash(filePath) {
@@ -589,10 +695,353 @@ function adminHtml() {
     .idea { display: grid; gap: 12px; place-items: start; }
     .idea-title { font-size: 26px; line-height: 1.35; }
     .notice { color: var(--muted); line-height: 1.8; }
+    body.sidebar-collapsed .app { grid-template-columns: 0 minmax(0, 1fr); }
+    body.sidebar-collapsed .sidebar { width: 0; padding: 0; overflow: hidden; border-right: 0; }
+    body.focus-mode .main { padding: 18px; }
+    body.focus-mode .editor-meta,
+    body.focus-mode .danger-zone { display: none; }
+    body.focus-mode .editor-page .topbar { margin-bottom: 12px; }
+    .editor-page { min-height: calc(100vh - 56px); }
+    .editor-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(12, 15, 22, 0.92);
+      padding: 12px;
+      backdrop-filter: blur(18px);
+      margin-bottom: 14px;
+    }
+    .editor-titleline { min-width: 0; }
+    .editor-titleline strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .editor-titleline span { color: var(--muted); font-size: 12px; }
+    .save-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .save-pill.dirty { color: var(--warn); border-color: rgba(255, 209, 102, 0.42); }
+    .save-pill.saving { color: var(--brand); border-color: rgba(139, 211, 255, 0.42); }
+    .save-pill.saved { color: var(--ok); border-color: rgba(126, 226, 168, 0.42); }
+    .save-pill.failed { color: var(--danger); border-color: rgba(255, 107, 122, 0.42); }
+    .editor-meta {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    details.meta-panel summary {
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 800;
+      list-style: none;
+    }
+    details.meta-panel summary::-webkit-details-marker { display: none; }
+    .meta-body { margin-top: 16px; }
+    .status-card { display: grid; gap: 14px; align-content: start; }
+    .status-badge {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 800;
+    }
+    .status-badge.published { background: rgba(126, 226, 168, 0.12); color: var(--ok); }
+    .status-badge.draft { background: rgba(255, 209, 102, 0.12); color: var(--warn); }
+    .option-row,
+    .tag-suggestions,
+    .cover-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .combo-shell {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+    .category-menu {
+      width: 100%;
+      display: grid;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(13, 17, 26, 0.98);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+      margin-top: 8px;
+      padding: 8px;
+    }
+    .category-menu.hidden { display: none; }
+    .category-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--text);
+      padding: 9px 10px;
+      text-align: left;
+    }
+    .category-option:hover,
+    .category-option.active {
+      border-color: rgba(139, 211, 255, 0.28);
+      background: rgba(139, 211, 255, 0.1);
+    }
+    .category-option.create {
+      color: var(--brand);
+      border-color: rgba(139, 211, 255, 0.18);
+    }
+    .category-option small { color: var(--muted); }
+    .tag-input-shell {
+      min-height: 48px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0f131c;
+      padding: 8px;
+    }
+    .tag-input-shell:focus-within {
+      border-color: var(--brand-strong);
+      box-shadow: 0 0 0 3px rgba(91, 183, 240, 0.12);
+    }
+    .tag-input-shell input {
+      min-width: 160px;
+      flex: 1;
+      border: 0;
+      background: transparent;
+      padding: 6px;
+      box-shadow: none;
+    }
+    .selected-tags {
+      display: contents;
+    }
+    .suggestion-title {
+      width: 100%;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .chip-button,
+    .tag-token {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #101620;
+      color: var(--muted);
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+    .chip-button:hover,
+    .chip-button.active {
+      border-color: var(--brand-strong);
+      color: var(--text);
+      background: rgba(139, 211, 255, 0.1);
+    }
+    .tag-token {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text);
+    }
+    .tag-token button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 0;
+    }
+    .cover-preview {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+    .cover-frame {
+      aspect-ratio: 16 / 9;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0d111a;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      text-align: center;
+      padding: 12px;
+    }
+    .cover-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cover-option {
+      width: 92px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #101620;
+      padding: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: left;
+    }
+    .cover-option img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 7px;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .cover-option.active {
+      border-color: var(--brand-strong);
+      color: var(--text);
+      background: rgba(139, 211, 255, 0.12);
+      box-shadow: 0 0 0 3px rgba(91, 183, 240, 0.1);
+    }
+    .autosave-toggle {
+      min-width: max-content;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #101620;
+      padding: 7px 10px;
+    }
+    .writer-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 0.88fr);
+      gap: 14px;
+      min-height: calc(100vh - 260px);
+    }
+    .writer-layout.preview-hidden { grid-template-columns: minmax(0, 1fr); }
+    .writer-layout.preview-hidden .preview-panel { display: none; }
+    .editor-textarea {
+      min-height: calc(100vh - 330px);
+      height: calc(100vh - 330px);
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      font-size: 16px;
+      line-height: 1.85;
+      padding: 18px;
+    }
+    .writing-card {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+    }
+    .markdown-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 14px;
+      background: rgba(15, 19, 28, 0.6);
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .preview-panel {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+    }
+    .preview-scroll {
+      min-height: calc(100vh - 330px);
+      height: calc(100vh - 330px);
+      overflow: auto;
+    }
+    .toc {
+      border-bottom: 1px solid var(--line);
+      padding: 12px 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .toc a {
+      display: block;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 3px 0;
+    }
+    .toc a:hover { color: var(--brand); }
+    .toc .level-3 { padding-left: 14px; }
+    .slash-menu {
+      position: absolute;
+      left: 18px;
+      bottom: 24px;
+      z-index: 12;
+      width: min(360px, calc(100% - 36px));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(13, 17, 26, 0.98);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
+      padding: 8px;
+    }
+    .slash-menu.hidden { display: none; }
+    .slash-menu button {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      padding: 10px;
+      text-align: left;
+    }
+    .slash-menu button:hover { background: rgba(139, 211, 255, 0.1); }
+    .slash-menu span { color: var(--muted); font-size: 12px; }
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 40;
+      max-width: min(360px, calc(100vw - 48px));
+      border: 1px solid rgba(126, 226, 168, 0.36);
+      border-radius: 12px;
+      background: rgba(16, 24, 20, 0.96);
+      color: var(--ok);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      padding: 12px 14px;
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .danger-zone {
+      margin-top: 18px;
+      border-color: rgba(255, 107, 122, 0.35);
+      background: rgba(59, 17, 26, 0.28);
+    }
     @media (max-width: 1100px) {
       .app { grid-template-columns: 1fr; }
       .sidebar { position: static; height: auto; }
-      .stats, .editor, .form-grid { grid-template-columns: 1fr; }
+      .stats, .editor, .form-grid, .editor-meta, .writer-layout { grid-template-columns: 1fr; }
+      .editor-textarea, .preview-scroll { height: 55vh; min-height: 55vh; }
     }
   </style>
 </head>
@@ -617,6 +1066,7 @@ function adminHtml() {
       <div id="app"></div>
     </main>
   </div>
+  <div id="toast" class="toast" aria-live="polite"></div>
 
   <script>
     const state = {
@@ -627,9 +1077,24 @@ function adminHtml() {
       ideas: [],
       currentIdea: '',
       settings: null,
+      meta: null,
       search: '',
       editing: null,
-      message: ''
+      message: '',
+      saveStatus: 'saved',
+      dirty: false,
+      editorSnapshot: '',
+      previewVisible: true,
+      sidebarVisible: true,
+      focusMode: false,
+      fullscreen: false,
+      syncPreview: true,
+      tagSearch: '',
+      autosave: true,
+      autosaveTimer: null,
+      categoryQuery: '',
+      categoryMenuOpen: false,
+      toastTimer: null
     };
 
     const app = document.getElementById('app');
@@ -638,10 +1103,37 @@ function adminHtml() {
       button.addEventListener('click', () => setView(button.dataset.view));
     });
 
+    window.addEventListener('beforeunload', (event) => {
+      if (!state.dirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+
+    document.addEventListener('keydown', (event) => {
+      const key = event.key.toLowerCase();
+      if ((event.ctrlKey || event.metaKey) && key === 's') {
+        event.preventDefault();
+        if (state.view === 'editor' && state.editing) saveEditingPost();
+      }
+      if (event.key === 'Escape' && state.focusMode) {
+        state.focusMode = false;
+        applyEditorChromeState();
+        render();
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      state.fullscreen = Boolean(document.fullscreenElement);
+    });
+
     function setView(view) {
+      if (state.view === 'editor' && state.dirty && !confirm('当前文章还有未保存内容，确定离开吗？')) return;
+      cancelAutosave();
       state.view = view;
       state.message = '';
       state.editing = null;
+      state.dirty = false;
+      state.saveStatus = 'saved';
       render();
       loadView();
     }
@@ -701,12 +1193,34 @@ function adminHtml() {
     async function loadSettings() {
       const data = await api('/settings');
       state.settings = data;
+      state.meta = {
+        categories: data.categories || [],
+        tags: data.tags || [],
+        covers: data.covers || []
+      };
       render();
+    }
+
+    async function loadMeta() {
+      if (state.meta) return state.meta;
+      state.meta = await api('/meta');
+      return state.meta;
     }
 
     function showMessage(message) {
       state.message = message;
       render();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      clearTimeout(state.toastTimer);
+      toast.textContent = message;
+      toast.classList.add('show');
+      state.toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2200);
     }
 
     function render() {
@@ -803,20 +1317,65 @@ function adminHtml() {
       const post = state.editing;
       if (!post) return renderHeader('编辑文章', '正在打开文章...') + '<div class="card empty">加载中</div>';
 
-      return renderHeader('编辑文章', escapeHtml(post.path), '<button class="btn" onclick="setView(\\'posts\\')">返回列表</button><button class="btn primary" id="savePost">保存</button>') +
-        '<section class="grid">' +
-        '<div class="card card-pad form-grid">' +
+      const metrics = getTextMetrics(post.body || '');
+      const layoutClass = state.previewVisible ? 'writer-layout' : 'writer-layout preview-hidden';
+      const postUrl = postUrlFromPath(post.path || post.fileName || '');
+
+      return '<section class="editor-page">' +
+        '<div class="editor-topbar">' +
+        '<div class="editor-titleline"><strong>' + escapeHtml(post.title || '未命名文章') + '</strong><span>' + escapeHtml(post.path || '') + '</span></div>' +
+        '<span class="save-pill ' + saveStatusClass() + '">' + saveStatusText() + '</span>' +
+        '<label class="check autosave-toggle"><input type="checkbox" id="autosave-toggle" ' + (state.autosave ? 'checked' : '') + ' /> 自动保存</label>' +
+        '<div class="actions">' +
+        '<button class="btn" onclick="setView(\\'posts\\')">返回</button>' +
+        '<button class="btn primary" id="savePost">保存 Ctrl+S</button>' +
+        (post.draft ? '<button class="btn primary" onclick="publishEditingPost()">发布文章</button>' : '<button class="btn" onclick="draftEditingPost()">设为草稿</button>') +
+        '<button class="btn" onclick="toggleFocusMode()">' + (state.focusMode ? '退出专注' : '专注写作') + '</button>' +
+        '<button class="btn" onclick="toggleFullscreen()">' + (state.fullscreen ? '退出全屏' : '全屏编辑') + '</button>' +
+        '<button class="btn" onclick="togglePreview()">' + (state.previewVisible ? '隐藏预览' : '显示预览') + '</button>' +
+        '<button class="btn" onclick="toggleSidebar()">' + (state.sidebarVisible ? '隐藏菜单' : '显示菜单') + '</button>' +
+        '</div></div>' +
+        '<div class="editor-meta">' +
+        '<details class="card card-pad meta-panel" open><summary>文章信息</summary><div class="meta-body grid">' +
+        '<div class="form-grid">' +
         field('标题', 'edit-title', post.title) +
-        field('分类', 'edit-category', post.category || '随笔') +
-        field('标签，用逗号分隔', 'edit-tags', (post.tags || []).join(', ')) +
         field('摘要', 'edit-description', post.description || '') +
-        field('封面', 'edit-cover', post.cover || '') +
-        '<label class="check" style="margin-top:28px"><input type="checkbox" id="edit-draft" ' + (post.draft ? 'checked' : '') + ' /> 是否草稿</label>' +
+        '<label><span>分类</span><div class="combo-shell"><input id="edit-category" value="' + escapeAttr(post.category || '随笔') + '" placeholder="选择或输入新分类，按 Enter 创建" autocomplete="off" /><button class="btn" type="button" onclick="createOrSelectCategory()">➕ 添加 / 创建</button></div>' + categoryButtonsHtml(post.category || '随笔') + '</label>' +
+        '<label><span>封面</span><input id="edit-cover" value="' + escapeAttr(post.cover || '') + '" />' + coverOptionsHtml() + '</label>' +
         '</div>' +
-        '<div class="editor">' +
-        '<div class="card card-pad"><label><span>正文 Markdown</span><textarea id="edit-body">' + escapeHtml(post.body || '') + '</textarea></label></div>' +
-        '<div class="card preview" id="preview"></div>' +
+        '<div><label><span>标签</span><div class="tag-input-shell">' + selectedTagsHtml(post.tags || []) + '<input id="tag-search" value="' + escapeAttr(state.tagSearch) + '" placeholder="输入标签，按 Enter 添加" /></div></label>' + tagSuggestionsHtml(post.tags || []) + '</div>' +
+        '</div></details>' +
+        '<aside class="card card-pad status-card">' +
+        '<div class="status-badge ' + (post.draft ? 'draft' : 'published') + '">' + (post.draft ? '草稿' : '已发布') + '</div>' +
+        '<div class="notice">当前状态：' + (post.draft ? '草稿，不会出现在前台列表。' : '已发布，会参与前台构建。') + '</div>' +
+        '<div class="notice">文章地址：<strong>' + escapeHtml(postUrl) + '</strong></div>' +
+        '<div class="actions">' +
+        (post.draft ? '<button class="btn primary" onclick="publishEditingPost()">发布文章</button>' : '<button class="btn" onclick="draftEditingPost()">设为草稿</button>') +
+        '<button class="btn" onclick="touchEditingPost()">更新日期</button>' +
         '</div>' +
+        '<div class="notice" id="statusMetrics">字数：<strong>' + metrics.words + '</strong><br />预计阅读：<strong>' + metrics.minutes + ' 分钟</strong></div>' +
+        coverPreviewHtml(post.cover || '') +
+        '</aside></div>' +
+        '<div class="' + layoutClass + '">' +
+        '<div class="card writing-card"><div class="panel-head"><span>Markdown 正文</span><span id="editorMetrics">' + metrics.words + ' 字 · ' + metrics.minutes + ' 分钟阅读</span></div>' +
+        '<div class="markdown-toolbar">' +
+        '<button class="btn" type="button" onclick="insertMarkdown(\\'h1\\')">H1</button>' +
+        '<button class="btn" type="button" onclick="insertMarkdown(\\'h2\\')">H2</button>' +
+        '<button class="btn" type="button" onclick="insertMarkdown(\\'bold\\')">B</button>' +
+        '<button class="btn" type="button" onclick="insertMarkdown(\\'quote\\')">引用</button>' +
+        '<button class="btn" type="button" onclick="insertMarkdown(\\'list\\')">列表</button>' +
+        '<button class="btn" type="button" onclick="insertMarkdown(\\'code\\')">代码</button>' +
+        '</div>' +
+        '<textarea id="edit-body" class="editor-textarea" placeholder="输入 / 可打开快捷菜单">' + escapeHtml(post.body || '') + '</textarea>' +
+        '<div id="slash-menu" class="slash-menu hidden">' +
+        '<button type="button" onclick="runSlashCommand(\\'h2\\')"><strong>二级标题</strong><span>## 标题</span></button>' +
+        '<button type="button" onclick="runSlashCommand(\\'quote\\')"><strong>引用</strong><span>> 一句话</span></button>' +
+        '<button type="button" onclick="runSlashCommand(\\'list\\')"><strong>列表</strong><span>- 条目</span></button>' +
+        '<button type="button" onclick="runSlashCommand(\\'code\\')"><strong>代码块</strong><span>&#96;&#96;&#96;</span></button>' +
+        '</div></div>' +
+        '<div class="card preview-panel"><div class="panel-head"><span>实时预览</span><label class="check"><input type="checkbox" id="sync-preview" ' + (state.syncPreview ? 'checked' : '') + ' /> 同步滚动</label></div><div id="toc" class="toc"></div><div class="preview preview-scroll" id="preview"></div></div>' +
+        '</div>' +
+        '<section class="card card-pad danger-zone"><h2>危险区域</h2><p class="notice">删除文章会移动到 .trash/posts/，不会永久删除。</p><button class="btn danger" onclick="deleteEditingPost()">删除这篇文章</button></section>' +
         '</section>';
     }
 
@@ -855,6 +1414,160 @@ function adminHtml() {
         '</section>';
     }
 
+    function saveStatusClass() {
+      return {
+        dirty: 'dirty',
+        saving: 'saving',
+        saved: 'saved',
+        failed: 'failed'
+      }[state.saveStatus] || 'saved';
+    }
+
+    function saveStatusText() {
+      return {
+        dirty: '未保存',
+        saving: '保存中',
+        saved: '已保存',
+        failed: '保存失败'
+      }[state.saveStatus] || '已保存';
+    }
+
+    function categoryButtonsHtml(current) {
+      const query = state.categoryQuery || current || '';
+      return '<div id="category-choices" class="category-menu ' + (state.categoryMenuOpen ? '' : 'hidden') + '">' + categoryMenuItemsHtml(query) + '</div>';
+    }
+
+    function categoryMenuItemsHtml(queryValue) {
+      const query = normalizeCategory(queryValue);
+      const queryKey = categoryKey(query);
+      const categories = getCategoryList();
+      const matches = (queryKey ? categories.filter((category) => categoryKey(category).includes(queryKey)) : categories).slice(0, 10);
+
+      if (!matches.length && query) {
+        return '<button class="category-option create" type="button" onmousedown="event.preventDefault(); createOrSelectCategory()"><span>➕ 创建分类 &quot;' + escapeHtml(query) + '&quot;</span><small>Enter</small></button>';
+      }
+
+      if (!matches.length) {
+        return '<div class="notice">输入分类名称后按 Enter 创建。</div>';
+      }
+
+      return matches.map((category) =>
+        '<button class="category-option ' + (categoryKey(category) === queryKey ? 'active' : '') + '" type="button" onmousedown="event.preventDefault(); setCategory(\\'' + escapeJs(category) + '\\')"><span>' + escapeHtml(category) + '</span><small>选择</small></button>'
+      ).join('');
+    }
+
+    function selectedTagsHtml(tags) {
+      if (!tags.length) return '<div id="selected-tags" class="selected-tags"><span class="pill">暂无标签</span></div>';
+
+      return '<div id="selected-tags" class="selected-tags">' + tags.map((tag) =>
+        '<span class="tag-token">' + escapeHtml(tag) + '<button type="button" onclick="removeTag(\\'' + escapeJs(tag) + '\\')">×</button></span>'
+      ).join('') + '</div>';
+    }
+
+    function tagSuggestionsHtml(selected) {
+      const search = state.tagSearch.trim().toLowerCase();
+      const selectedSet = new Set(selected);
+      const suggestions = (state.meta?.tags || [])
+        .filter((tag) => !selectedSet.has(tag))
+        .filter((tag) => !search || tag.toLowerCase().includes(search))
+        .slice(0, 18);
+
+      if (!suggestions.length) return '<div id="tag-suggestions" class="tag-suggestions"><span class="suggestion-title">推荐标签</span><span class="pill">输入后按 Enter 添加新标签</span></div>';
+
+      return '<div id="tag-suggestions" class="tag-suggestions"><span class="suggestion-title">推荐标签</span>' + suggestions.map((tag) =>
+        '<button class="chip-button" type="button" onclick="addTag(\\'' + escapeJs(tag) + '\\')">' + escapeHtml(tag) + '</button>'
+      ).join('') + '</div>';
+    }
+
+    function coverOptionsHtml() {
+      const covers = state.meta?.covers || [];
+      if (!covers.length) return '';
+      const current = state.editing?.cover || '';
+
+      return '<div class="cover-grid">' + covers.map((cover) =>
+        '<button class="cover-option ' + (cover.path === current ? 'active' : '') + '" type="button" data-cover-path="' + escapeAttr(cover.path) + '" onclick="selectCover(\\'' + escapeJs(cover.path) + '\\')"><img src="' + escapeAttr(cover.previewUrl) + '" alt="" /><span>' + escapeHtml(cover.name) + '</span></button>'
+      ).join('') + '</div>';
+    }
+
+    function coverPreviewHtml(cover) {
+      return '<div id="cover-preview-holder" class="cover-preview">' + coverPreviewInnerHtml(cover) + '</div>';
+    }
+
+    function coverPreviewInnerHtml(cover) {
+      if (!cover) return '<div class="cover-frame">未设置封面，将使用站点默认封面。</div>';
+
+      const known = findCover(cover);
+      if (known) return '<div class="cover-frame"><img src="' + escapeAttr(known.previewUrl) + '" alt="封面预览" /></div><div class="notice">已选择：' + escapeHtml(known.path) + '</div>';
+
+      if (/^https?:\\/\\//.test(cover)) {
+        return '<div class="cover-frame"><img src="' + escapeAttr(cover) + '" alt="封面预览" onerror="this.replaceWith(document.createTextNode(\\'外部图片无法预览\\'))" /></div><div class="notice">外部图片地址。</div>';
+      }
+
+      return '<div class="cover-frame">找不到这个本地封面图。请确认路径在 public/images/covers 中。</div><div class="notice">' + escapeHtml(cover) + '</div>';
+    }
+
+    function findCover(coverPath) {
+      return (state.meta?.covers || []).find((cover) => cover.path === coverPath);
+    }
+
+    function getTextMetrics(markdown) {
+      const codeFence = new RegExp('\\\\x60\\\\x60\\\\x60[\\\\s\\\\S]*?\\\\x60\\\\x60\\\\x60', 'g');
+      const text = String(markdown || '').replace(codeFence, '').replace(/[#>*_\\-[\\]()]/g, ' ');
+      const chinese = text.match(/[\\u4e00-\\u9fff]/g)?.length || 0;
+      const latin = text
+        .replace(/[\\u4e00-\\u9fff]/g, ' ')
+        .trim()
+        .split(/\\s+/)
+        .filter(Boolean).length;
+      const words = chinese + latin;
+      const minutes = Math.max(1, Math.ceil(chinese / 420 + latin / 220));
+
+      return { words, minutes };
+    }
+
+    function getHeadings(markdown) {
+      return String(markdown || '')
+        .split('\\n')
+        .map((line) => {
+          const match = line.match(/^(#{1,3})\\s+(.+)$/);
+          if (!match) return null;
+          const title = match[2].trim();
+          return {
+            level: match[1].length,
+            title,
+            id: headingId(title)
+          };
+        })
+        .filter(Boolean);
+    }
+
+    function tocHtml(markdown) {
+      const headings = getHeadings(markdown);
+      if (!headings.length) return '<span>暂无目录</span>';
+
+      return '<strong>文章目录</strong>' + headings.map((heading) =>
+        '<a class="level-' + heading.level + '" href="#' + escapeAttr(heading.id) + '">' + escapeHtml(heading.title) + '</a>'
+      ).join('');
+    }
+
+    function headingId(title) {
+      const id = String(title)
+        .trim()
+        .toLowerCase()
+        .replace(/[^\\p{Letter}\\p{Number}]+/gu, '-')
+        .replace(/^-+|-+$/g, '');
+      return id || 'section';
+    }
+
+    function postUrlFromPath(postPath) {
+      const normalized = String(postPath || '')
+        .replace(/\\\\/g, '/')
+        .replace(/^src\\/content\\/blog\\//, '')
+        .replace(/^src\\/content\\/posts\\//, '')
+        .replace(/\\.(md|mdx)$/i, '');
+      return normalized ? '/blog/posts/' + normalized : '/blog/posts/';
+    }
+
     function bindViewEvents() {
       if (state.view === 'new') {
         document.getElementById('newPostForm')?.addEventListener('submit', createNewPost);
@@ -870,15 +1583,252 @@ function adminHtml() {
       }
 
       if (state.view === 'editor') {
-        const body = document.getElementById('edit-body');
-        const preview = document.getElementById('preview');
-        if (!body || !preview) return;
-
-        const updatePreview = () => preview.innerHTML = markdownToHtml(body.value);
-        body.addEventListener('input', updatePreview);
-        updatePreview();
+        bindEditorEvents();
         document.getElementById('savePost')?.addEventListener('click', saveEditingPost);
       }
+    }
+
+    function bindEditorEvents() {
+      const body = document.getElementById('edit-body');
+      const preview = document.getElementById('preview');
+      if (!body || !preview) return;
+
+      const metadataInputs = ['edit-title', 'edit-description', 'edit-cover'];
+      for (const id of metadataInputs) {
+        document.getElementById(id)?.addEventListener('input', () => {
+          syncEditingFromDom();
+          markEditorDirty();
+          if (id === 'edit-cover') {
+            updateCoverPreviewOnly();
+            updateCoverSelection();
+          }
+        });
+      }
+
+      const categoryInput = document.getElementById('edit-category');
+      categoryInput?.addEventListener('focus', () => {
+        state.categoryQuery = categoryInput.value;
+        state.categoryMenuOpen = true;
+        updateCategoryControls();
+      });
+      categoryInput?.addEventListener('input', () => {
+        if (!state.editing) return;
+        state.editing.category = categoryInput.value;
+        state.categoryQuery = categoryInput.value;
+        state.categoryMenuOpen = true;
+        markEditorDirty();
+        updateCategoryControls();
+      });
+      categoryInput?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          createOrSelectCategory();
+          return;
+        }
+        if (event.key === 'Escape') {
+          state.categoryMenuOpen = false;
+          updateCategoryControls();
+        }
+      });
+      categoryInput?.addEventListener('blur', () => {
+        setTimeout(() => {
+          const value = normalizeCategory(categoryInput.value);
+          if (!value) categoryInput.value = state.editing?.category || '随笔';
+          if (state.editing) state.editing.category = categoryInput.value;
+          state.categoryMenuOpen = false;
+          markEditorDirty();
+          updateCategoryControls();
+        }, 120);
+      });
+
+      body.addEventListener('input', () => {
+        if (state.editing) state.editing.body = body.value;
+        markEditorDirty();
+        updateEditorPreview();
+        updateSlashMenu();
+      });
+      body.addEventListener('keyup', updateSlashMenu);
+      body.addEventListener('click', updateSlashMenu);
+      body.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') hideSlashMenu();
+      });
+
+      body.addEventListener('scroll', () => {
+        if (!state.syncPreview) return;
+        const previewBox = document.getElementById('preview');
+        if (!previewBox) return;
+        const sourceMax = Math.max(1, body.scrollHeight - body.clientHeight);
+        const targetMax = Math.max(1, previewBox.scrollHeight - previewBox.clientHeight);
+        previewBox.scrollTop = (body.scrollTop / sourceMax) * targetMax;
+      });
+
+      const tagSearch = document.getElementById('tag-search');
+      tagSearch?.addEventListener('input', (event) => {
+        state.tagSearch = event.target.value;
+        updateTagControls();
+      });
+      tagSearch?.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        addTagFromSearch();
+      });
+
+      document.getElementById('sync-preview')?.addEventListener('change', (event) => {
+        state.syncPreview = event.target.checked;
+      });
+      document.getElementById('autosave-toggle')?.addEventListener('change', (event) => {
+        state.autosave = event.target.checked;
+        if (state.autosave && state.dirty) scheduleAutosave();
+        if (!state.autosave) cancelAutosave();
+      });
+
+      updateEditorPreview();
+      updateSavePill();
+      applyEditorChromeState();
+    }
+
+    function syncEditingFromDom() {
+      if (!state.editing) return;
+      state.editing.title = valueOf('edit-title') || state.editing.title;
+      state.editing.category = valueOf('edit-category') || '随笔';
+      state.editing.description = valueOf('edit-description');
+      state.editing.cover = valueOf('edit-cover');
+      state.editing.body = valueOf('edit-body');
+    }
+
+    function markEditorDirty() {
+      state.dirty = getEditorSnapshot(getEditorPayload()) !== state.editorSnapshot;
+      state.saveStatus = state.dirty ? 'dirty' : 'saved';
+      updateSavePill();
+      if (state.dirty) scheduleAutosave();
+      else cancelAutosave();
+    }
+
+    function scheduleAutosave() {
+      cancelAutosave();
+      if (!state.autosave || state.view !== 'editor' || !state.editing) return;
+      state.autosaveTimer = setTimeout(() => {
+        if (state.view === 'editor' && state.editing && state.dirty) saveEditingPost({ silent: true, autosave: true });
+      }, 2000);
+    }
+
+    function cancelAutosave() {
+      if (state.autosaveTimer) clearTimeout(state.autosaveTimer);
+      state.autosaveTimer = null;
+    }
+
+    function setSaveStatus(status) {
+      state.saveStatus = status;
+      updateSavePill();
+    }
+
+    function updateSavePill() {
+      const pill = document.querySelector('.save-pill');
+      if (!pill) return;
+      pill.className = 'save-pill ' + saveStatusClass();
+      pill.textContent = saveStatusText();
+    }
+
+    function updateEditorPreview() {
+      const body = document.getElementById('edit-body');
+      const preview = document.getElementById('preview');
+      const toc = document.getElementById('toc');
+      const metrics = document.getElementById('editorMetrics');
+      const statusMetrics = document.getElementById('statusMetrics');
+      if (!body || !preview) return;
+
+      preview.innerHTML = markdownToHtml(body.value);
+      if (toc) toc.innerHTML = tocHtml(body.value);
+
+      const textMetrics = getTextMetrics(body.value);
+      if (metrics) metrics.textContent = textMetrics.words + ' 字 · ' + textMetrics.minutes + ' 分钟阅读';
+      if (statusMetrics) statusMetrics.innerHTML = '字数：<strong>' + textMetrics.words + '</strong><br />预计阅读：<strong>' + textMetrics.minutes + ' 分钟</strong>';
+    }
+
+    function updateCoverPreviewOnly() {
+      const holder = document.getElementById('cover-preview-holder');
+      if (!holder) return;
+      holder.innerHTML = coverPreviewInnerHtml(valueOf('edit-cover'));
+    }
+
+    function updateCoverSelection() {
+      const current = valueOf('edit-cover') || state.editing?.cover || '';
+      document.querySelectorAll('.cover-option').forEach((button) => {
+        button.classList.toggle('active', button.dataset.coverPath === current);
+      });
+    }
+
+    function getEditorPayload() {
+      return {
+        title: normalizeText(valueOf('edit-title') || state.editing?.title || ''),
+        category: normalizeText(valueOf('edit-category') || state.editing?.category || '随笔') || '随笔',
+        tags: cleanTags(state.editing?.tags || []),
+        description: valueOf('edit-description').trim(),
+        cover: valueOf('edit-cover').trim(),
+        draft: Boolean(state.editing?.draft),
+        body: valueOf('edit-body')
+      };
+    }
+
+    function getEditorSnapshot(payload) {
+      return JSON.stringify({
+        title: payload.title,
+        category: payload.category,
+        tags: [...(payload.tags || [])].sort(),
+        description: payload.description,
+        cover: payload.cover,
+        draft: payload.draft,
+        body: payload.body
+      });
+    }
+
+    function normalizeText(value) {
+      return String(value || '').trim().replace(/\\s+/g, ' ');
+    }
+
+    function normalizeCategory(value) {
+      return normalizeText(value);
+    }
+
+    function categoryKey(value) {
+      return normalizeCategory(value).toLocaleLowerCase('zh-CN');
+    }
+
+    function getCategoryList() {
+      const seen = new Set();
+      const categories = [];
+      for (const category of state.meta?.categories || []) {
+        const normalized = normalizeCategory(category);
+        const key = categoryKey(normalized);
+        if (!normalized || seen.has(key)) continue;
+        seen.add(key);
+        categories.push(normalized);
+      }
+      return categories.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    }
+
+    function upsertCategory(category) {
+      const normalized = normalizeCategory(category);
+      if (!normalized) return { category: '', created: false };
+
+      state.meta = state.meta || { categories: [], tags: [], covers: [] };
+      const existing = getCategoryList().find((item) => categoryKey(item) === categoryKey(normalized));
+      if (existing) return { category: existing, created: false };
+
+      state.meta.categories = [...getCategoryList(), normalized].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+      return { category: normalized, created: true };
+    }
+
+    function cleanTags(tags) {
+      const seen = new Set();
+      const result = [];
+      for (const tag of tags || []) {
+        const nextTag = normalizeText(tag);
+        if (!nextTag || seen.has(nextTag)) continue;
+        seen.add(nextTag);
+        result.push(nextTag);
+      }
+      return result;
     }
 
     async function createNewPost(event) {
@@ -899,12 +1849,28 @@ function adminHtml() {
 
     async function editPost(id) {
       try {
+        await loadMeta();
         state.view = 'editor';
         state.editing = null;
         state.message = '';
+        state.dirty = false;
+        state.saveStatus = 'saved';
+        cancelAutosave();
         render();
         const data = await api('/posts/' + encodeURIComponent(id));
         state.editing = data.post;
+        state.tagSearch = '';
+        state.categoryQuery = data.post.category || '';
+        state.categoryMenuOpen = false;
+        state.editorSnapshot = getEditorSnapshot({
+          title: data.post.title,
+          category: data.post.category,
+          tags: data.post.tags || [],
+          description: data.post.description || '',
+          cover: data.post.cover || '',
+          draft: Boolean(data.post.draft),
+          body: data.post.body || ''
+        });
         render();
       } catch (error) {
         state.view = 'posts';
@@ -914,26 +1880,281 @@ function adminHtml() {
       }
     }
 
-    async function saveEditingPost() {
+    async function saveEditingPost(options = {}) {
       try {
+        if (!state.editing || state.saveStatus === 'saving') return;
+        cancelAutosave();
+        syncEditingFromDom();
         const post = state.editing;
-        const payload = {
-          title: valueOf('edit-title'),
-          category: valueOf('edit-category') || '随笔',
-          tags: valueOf('edit-tags'),
-          description: valueOf('edit-description'),
-          cover: valueOf('edit-cover'),
-          draft: document.getElementById('edit-draft').checked,
-          body: valueOf('edit-body')
-        };
+        const payload = getEditorPayload();
+        setSaveStatus('saving');
         const data = await api('/posts/' + encodeURIComponent(post.id), { method: 'PUT', body: JSON.stringify(payload) });
-        state.editing = data.post;
-        showMessage('已保存：' + data.post.title);
-        state.view = 'editor';
-        render();
+        state.editing = { ...data.post, body: payload.body };
+        mergeEditorMeta(payload);
+        state.editorSnapshot = getEditorSnapshot(payload);
+        state.dirty = false;
+        state.saveStatus = 'saved';
+        state.categoryQuery = payload.category;
+        state.categoryMenuOpen = false;
+        applyPayloadToEditorFields(payload);
+        updateSavePill();
+        updateEditorStaticBits();
+        updateCategoryControls();
+        updateTagControls();
+        updateCoverPreviewOnly();
+        updateCoverSelection();
       } catch (error) {
-        showMessage('保存失败：' + (error.message || '未知错误'));
+        state.saveStatus = 'failed';
+        updateSavePill();
+        if (!options.silent) showMessage('保存失败：' + (error.message || '未知错误'));
       }
+    }
+
+    function mergeEditorMeta(payload) {
+      state.meta = state.meta || { categories: [], tags: [], covers: [] };
+      upsertCategory(payload.category);
+      for (const tag of payload.tags || []) {
+        if (!state.meta.tags.includes(tag)) state.meta.tags.push(tag);
+      }
+      state.meta.tags.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    }
+
+    function updateEditorStaticBits() {
+      const post = state.editing;
+      if (!post) return;
+      const title = document.querySelector('.editor-titleline strong');
+      const path = document.querySelector('.editor-titleline span');
+      if (title) title.textContent = post.title || '未命名文章';
+      if (path) path.textContent = post.path || '';
+    }
+
+    function applyPayloadToEditorFields(payload) {
+      const fields = {
+        'edit-title': payload.title,
+        'edit-category': payload.category,
+        'edit-description': payload.description,
+        'edit-cover': payload.cover
+      };
+      for (const [id, value] of Object.entries(fields)) {
+        const input = document.getElementById(id);
+        if (input) input.value = value || '';
+      }
+    }
+
+    function setCategory(category) {
+      if (!state.editing) return;
+      const result = upsertCategory(category);
+      if (!result.category) {
+        showToast('分类不能为空。');
+        return;
+      }
+      state.editing.category = result.category;
+      state.categoryQuery = result.category;
+      state.categoryMenuOpen = false;
+      const input = document.getElementById('edit-category');
+      if (input) input.value = result.category;
+      markEditorDirty();
+      updateCategoryControls();
+      if (result.created) showToast('已创建分类：' + result.category);
+    }
+
+    function createOrSelectCategory() {
+      const input = document.getElementById('edit-category');
+      setCategory(input?.value || '');
+    }
+
+    function updateCategoryControls() {
+      const holder = document.getElementById('category-choices');
+      if (!holder) return;
+      const current = normalizeCategory(valueOf('edit-category') || state.editing?.category || '');
+      state.categoryQuery = current;
+      holder.classList.toggle('hidden', !state.categoryMenuOpen);
+      holder.innerHTML = categoryMenuItemsHtml(current);
+    }
+
+    function addTag(tag) {
+      if (!state.editing) return;
+      const nextTag = normalizeText(tag);
+      if (!nextTag) return;
+      state.editing.tags = cleanTags([...(state.editing.tags || []), nextTag]);
+      mergeEditorMeta({ category: state.editing.category || '随笔', tags: [nextTag] });
+      state.tagSearch = '';
+      markEditorDirty();
+      const input = document.getElementById('tag-search');
+      if (input) input.value = '';
+      updateTagControls();
+    }
+
+    function addTagFromSearch() {
+      const input = document.getElementById('tag-search');
+      addTag(input?.value || '');
+    }
+
+    function removeTag(tag) {
+      if (!state.editing) return;
+      state.editing.tags = (state.editing.tags || []).filter((item) => item !== tag);
+      markEditorDirty();
+      updateTagControls();
+    }
+
+    function updateTagControls() {
+      if (!state.editing) return;
+      const selected = document.getElementById('selected-tags');
+      const suggestions = document.getElementById('tag-suggestions');
+      if (selected) selected.outerHTML = selectedTagsHtml(state.editing.tags || []);
+      if (suggestions) suggestions.outerHTML = tagSuggestionsHtml(state.editing.tags || []);
+    }
+
+    function selectCover(coverPath) {
+      if (!state.editing) return;
+      state.editing.cover = coverPath;
+      const input = document.getElementById('edit-cover');
+      if (input) input.value = coverPath;
+      markEditorDirty();
+      updateCoverPreviewOnly();
+      updateCoverSelection();
+    }
+
+    function insertMarkdown(command) {
+      const body = document.getElementById('edit-body');
+      if (!body) return;
+      const start = body.selectionStart || 0;
+      const end = body.selectionEnd || start;
+      const selected = body.value.slice(start, end);
+      const snippets = {
+        h1: ['# ', selected || '标题'],
+        h2: ['## ', selected || '小标题'],
+        bold: ['**', selected || '加粗文字', '**'],
+        quote: ['> ', selected || '这里写引用'],
+        list: ['- ', selected || '列表项'],
+        code: ['\\x60\\x60\\x60\\n', selected || 'code', '\\n\\x60\\x60\\x60']
+      };
+      const parts = snippets[command];
+      if (!parts) return;
+
+      const text = parts.length === 3 ? parts[0] + parts[1] + parts[2] : parts[0] + parts[1];
+      body.setRangeText(text, start, end, 'end');
+      body.focus();
+      if (parts.length === 3 && !selected) {
+        body.selectionStart = start + parts[0].length;
+        body.selectionEnd = body.selectionStart + parts[1].length;
+      }
+      body.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function updateSlashMenu() {
+      const body = document.getElementById('edit-body');
+      const menu = document.getElementById('slash-menu');
+      if (!body || !menu) return;
+
+      const position = body.selectionStart || 0;
+      const lineStart = body.value.lastIndexOf('\\n', Math.max(0, position - 1)) + 1;
+      const currentLine = body.value.slice(lineStart, position).trim();
+      menu.classList.toggle('hidden', !currentLine.startsWith('/'));
+    }
+
+    function hideSlashMenu() {
+      document.getElementById('slash-menu')?.classList.add('hidden');
+    }
+
+    function runSlashCommand(command) {
+      const body = document.getElementById('edit-body');
+      if (!body) return;
+      const position = body.selectionStart || 0;
+      const lineStart = body.value.lastIndexOf('\\n', Math.max(0, position - 1)) + 1;
+      body.setSelectionRange(lineStart, position);
+      hideSlashMenu();
+      insertMarkdown(command);
+    }
+
+    function togglePreview() {
+      state.previewVisible = !state.previewVisible;
+      render();
+    }
+
+    function toggleSidebar() {
+      state.sidebarVisible = !state.sidebarVisible;
+      applyEditorChromeState();
+      render();
+    }
+
+    function toggleFocusMode() {
+      state.focusMode = !state.focusMode;
+      applyEditorChromeState();
+      render();
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+          state.fullscreen = true;
+        } else {
+          await document.exitFullscreen();
+          state.fullscreen = false;
+        }
+      } catch (error) {
+        showMessage('全屏切换失败：' + (error.message || '浏览器拒绝了全屏请求'));
+      }
+      render();
+    }
+
+    function applyEditorChromeState() {
+      document.body.classList.toggle('sidebar-collapsed', !state.sidebarVisible);
+      document.body.classList.toggle('focus-mode', state.focusMode);
+    }
+
+    async function publishEditingPost() {
+      if (!state.editing) return;
+      if (state.dirty) {
+        await saveEditingPost();
+        if (state.dirty) return;
+      }
+      const body = state.editing.body || '';
+      const data = await api('/posts/' + encodeURIComponent(state.editing.id) + '/publish', { method: 'POST' });
+      state.editing = { ...state.editing, ...data.post, body };
+      state.dirty = false;
+      state.saveStatus = 'saved';
+      state.editorSnapshot = getEditorSnapshot(getEditorPayload());
+      render();
+    }
+
+    async function draftEditingPost() {
+      if (!state.editing) return;
+      if (state.dirty) {
+        await saveEditingPost();
+        if (state.dirty) return;
+      }
+      const body = state.editing.body || '';
+      const data = await api('/posts/' + encodeURIComponent(state.editing.id) + '/draft', { method: 'POST' });
+      state.editing = { ...state.editing, ...data.post, body };
+      state.dirty = false;
+      state.saveStatus = 'saved';
+      state.editorSnapshot = getEditorSnapshot(getEditorPayload());
+      render();
+    }
+
+    async function touchEditingPost() {
+      if (!state.editing) return;
+      const body = state.editing.body || valueOf('edit-body');
+      const data = await api('/posts/' + encodeURIComponent(state.editing.id) + '/touch', { method: 'POST' });
+      state.editing = { ...state.editing, ...data.post, body };
+      showMessage('updated 日期已更新。');
+      state.view = 'editor';
+      render();
+    }
+
+    async function deleteEditingPost() {
+      if (!state.editing) return;
+      const title = state.editing.title || '未命名文章';
+      if (!confirm('确认删除《' + title + '》吗？文章会先移动到 .trash/posts/。')) return;
+      if (!confirm('请再次确认：删除后需要到回收站恢复。继续删除吗？')) return;
+      await api('/posts/' + encodeURIComponent(state.editing.id) + '/delete', { method: 'POST' });
+      state.dirty = false;
+      state.editing = null;
+      state.view = 'posts';
+      showMessage('已删除到回收站。');
+      await loadPosts(false);
     }
 
     async function publishPost(id) {
@@ -1011,9 +2232,9 @@ function adminHtml() {
       let inList = false;
       const html = [];
       for (const line of lines) {
-        if (/^###\\s+/.test(line)) { closeList(); html.push('<h3>' + line.replace(/^###\\s+/, '') + '</h3>'); continue; }
-        if (/^##\\s+/.test(line)) { closeList(); html.push('<h2>' + line.replace(/^##\\s+/, '') + '</h2>'); continue; }
-        if (/^#\\s+/.test(line)) { closeList(); html.push('<h1>' + line.replace(/^#\\s+/, '') + '</h1>'); continue; }
+        if (/^###\\s+/.test(line)) { closeList(); const title = line.replace(/^###\\s+/, ''); html.push('<h3 id="' + escapeAttr(headingId(title)) + '">' + title + '</h3>'); continue; }
+        if (/^##\\s+/.test(line)) { closeList(); const title = line.replace(/^##\\s+/, ''); html.push('<h2 id="' + escapeAttr(headingId(title)) + '">' + title + '</h2>'); continue; }
+        if (/^#\\s+/.test(line)) { closeList(); const title = line.replace(/^#\\s+/, ''); html.push('<h1 id="' + escapeAttr(headingId(title)) + '">' + title + '</h1>'); continue; }
         if (/^&gt;\\s+/.test(line)) { closeList(); html.push('<blockquote>' + line.replace(/^&gt;\\s+/, '') + '</blockquote>'); continue; }
         if (/^-\\s+/.test(line)) {
           if (!inList) { html.push('<ul>'); inList = true; }
